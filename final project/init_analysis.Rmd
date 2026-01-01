@@ -1,0 +1,176 @@
+---
+title: "Final Project Initial Analysis"
+author: "Naomi Le Mouel, Ariel Lin"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+library(tinytex)
+library(readr)
+library(ggplot2)
+```
+
+Dataset: PEW RESEARCH CENTER’S AMERICAN TRENDS PANEL WAVE 105 socialDemo
+
+Load data:
+```{r}
+socialDemo <- read_csv("socialDemo.csv")
+```
+**Variables**
+
+Research Question: What effect has social media had on Democracy in the eyes of American citizens? Is American satisfaction with democracy in the United States related to their opinions on social media's impact on democracy?
+
+Hypothesis: Low American satisfaction with democracy in the US is directly correlated with belief that social media has a negative impact on democracy. (and vice versa)
+
+  Theory: Americans who believe social media has a negative impact on democracy are also less satisfied with the US democracy.
+
+Explanatory/Independent variable: Individual Americans' satisfaction with democracy in the US
+
+Outcome/Dependent variable: Individual Americans' opinions on social media's impact on democracy
+
+  
+**New columns for making responses numeric:**
+Variables that would be helpful but we don't have: how frequently a respondent uses social media, age of users, race of respondents
+
+Variables of interest:
+
+SATISFIED_DEMOCRACY_w105: How satisfied are you with the way democracy is working in the U.S?
+1) Very satisfied
+2) Somewhat satisfied
+3) Not too satisfied
+4) Not at all satisfied
+
+SATISFIED_DEMOCRACY
+```{r}
+socialDemo$SATISFIED_DEMOCRACY <- (ifelse(socialDemo$SATISFIED_DEMOCRACY_W105 == "Very satisfied", 4,
+                                    ifelse(socialDemo$SATISFIED_DEMOCRACY_W105 == "Somewhat satisfied", 3,
+                                      ifelse(socialDemo$SATISFIED_DEMOCRACY_W105 == "Not too satisfied", 2, 
+                                        ifelse(socialDemo$SATISFIED_DEMOCRACY_W105 == "Not at all satisfied", 1, NA)))))
+```
+
+
+F_PARTY_FINAL: As of today do you lean more to
+1) Republican
+2) Democrat
+3) Independent
+4) Something else
+
+PARTY
+```{r}
+socialDemo$PARTY <- (ifelse(socialDemo$F_PARTY_FINAL == "Republican", 1,
+                      ifelse(socialDemo$F_PARTY_FINAL == "Democrat", 2,
+                        ifelse(socialDemo$F_PARTY_FINAL == "Independent", 3,
+                          ifelse(socialDemo$F_PARTY_FINAL == "Something else", 4, NA)))))
+```
+
+
+SNSUSE: Do you use social media sites like Facebook, Twitter, or Instagram?
+1) Yes, I use social media sites
+2) No, I do not use social media sites
+
+SOCIALMEDIA_USE
+```{r}
+socialDemo$SOCIALMEDIA_USE <- (ifelse(socialDemo$SNSUSE_W105 == "Yes, I use social media sites", 1,
+                                ifelse(socialDemo$SNSUSE_W105 == "No, I do not use social media sites", 0, NA)))
+
+```
+
+
+POST_ISSUE: How often, if ever, do you post or share things about political or social issues on social media?
+1) Often
+2) Sometimes
+3) Rarely
+4) Never
+POST_ISSUE
+```{r}
+socialDemo$POST_ISSUE <- (ifelse(socialDemo$POST_ISSUES_W105 == "Often", 1,
+                                 ifelse(socialDemo$POST_ISSUES_W105 == "Sometimes", 2, 
+                                        ifelse(socialDemo$POST_ISSUES_W105 == "Rarely", 3,
+                                               ifelse(socialDemo$POST_ISSUES_W105 == "Never", 4, NA)))))
+```
+
+
+SOCIAL_DEMOCRACY_w150: Overall, when you consider all the advantages and disadvantages of social media, would you say social media has been
+1) More of a GOOD THING for democracy in the U.S.
+2) More of a BAD THING for democracy in the U.S.
+
+SDEMOCRACY
+```{r}
+socialDemo$SDEMOCRACY <- (ifelse(socialDemo$SOCIAL_DEMOCRACY_W105== "More of a GOOD THING for democracy in the U.S.", 1,
+                          ifelse(socialDemo$SOCIAL_DEMOCRACY_W105 == "More of a BAD THING for democracy in the U.S.", 0, NA)))
+```
+
+
+SMIMPACT_BATT: In general, do you think access to the internet and social media has made people more or less
+  SMIMPACT_INFORMED_w105: Informed about current events in our country?
+  SMIMPACT_DIVIDED_w105: Divided in their political opinions?
+  SMIMPACT_MANIPULATE_w105: Easy to manipulate with false information and rumors?
+  SMIMPACT_DISCOURSE_w105: Civil in the way they talk about politics?
+  1) More
+  2) Less
+  3) Not had much impact
+  
+INFORMED Effect of social media on education of current events
+```{r}
+socialDemo$INFORMED <- (ifelse(socialDemo$SMIMPACT_INFORMED_W105 == "More", 1,
+                          ifelse(socialDemo$SMIMPACT_INFORMED_W105 == "Less", 2,
+                            ifelse(socialDemo$SMIMPACT_INFORMED_W105 == "Not had much impact", 3, NA))))
+```
+
+DIVISION Effect of social media on political division
+```{r}
+socialDemo$DIVISION <- (ifelse(socialDemo$SMIMPACT_INFORMED_W105 == "More", 1,
+                          ifelse(socialDemo$SMIMPACT_INFORMED_W105 == "Less", 2,
+                            ifelse(socialDemo$SMIMPACT_INFORMED_W105 == "Not had much impact", 3, NA))))
+```
+
+MANIPULATE Effect of social media on manipulation through false information
+```{r}
+socialDemo$MANIPULATE <- (ifelse(socialDemo$SMIMPACT_MANIPULATE_W105 == "More", 1,
+                          ifelse(socialDemo$SMIMPACT_MANIPULATE_W105 == "Less", 2,
+                            ifelse(socialDemo$SMIMPACT_MANIPULATE_W105 == "Not had much impact", 3, NA))))
+```
+
+DISCOURSE Effect of social media on civil political discourse
+```{r}
+socialDemo$DISCOURSE <- (ifelse(socialDemo$SMIMPACT_DISCOURSE_W105 == "More", 1,
+                          ifelse(socialDemo$SMIMPACT_DISCOURSE_W105 == "Less", 2,
+                            ifelse(socialDemo$SMIMPACT_DISCOURSE_W105 == "Not had much impact", 3, NA))))
+```
+
+*Dataset*
+```{r}
+nrow(socialDemo)
+```
+```{r}
+sum(is.na(socialDemo))
+```
+```{r}
+ncol(socialDemo)
+```
+
+**Summary for American's view on social media's effect on democracy**
+```{r}
+summary(socialDemo$SDEMOCRACY)
+```
+Mean of 0.3344 means a vast majority of respondents think social media has been a bad thing for democracy. There are 64 missing values.
+
+```{r}
+summary(socialDemo$SATISFIED_DEMOCRACY)
+```
+Mean of 2.229 means most respondents are on average "not too satisfied" with the US democracy. There are 20 respondents who did not respond to this question.
+
+
+*Visualization?*
+```{r}
+boxplot(socialDemo$SATISFIED_DEMOCRACY ~ socialDemo$SDEMOCRACY, names = c("Overall BAD", "Overall GOOD"), xlab = "Effect of Social Media's Impact on US Democracy", ylab = "Satisfaction with US Democracy")
+
+```
+```{r}
+ggplot(socialDemo, aes(x = factor(SDEMOCRACY), y = SATISFIED_DEMOCRACY)) + 
+  geom_violin()
+```
+

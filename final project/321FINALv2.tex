@@ -1,0 +1,910 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={321 Final Project},
+  pdfauthor={Ariel Lin and Naomi Le Mouel},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{321 Final Project}
+\author{Ariel Lin and Naomi Le Mouel}
+\date{2024-03-13}
+
+\begin{document}
+\maketitle
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+Social media has a powerful presence in American lives. According to
+data from Statista, there are over 300 million social media users in the
+United States. Media platforms are used for many purposes, including
+entertainment, socialization, business, education, and news. Around half
+of the US population gets their news information from social media,
+according to a 2021 study conducted by the Pew Research Center. With so
+many media influencers and users, there is a lot of room for
+misinformation, fake news, propaganda, and online discourse, which can
+often concern political topics such as presidential elections.
+
+In this report, we examine the potential relationship between Americans'
+satisfaction with U.S. democracy and their opinions on social media's
+impact on democracy. The data used in this report is from the Pew
+Research Center's American Trends Panel (ATP) Wave 105, which surveyed
+3,581 U.S. adults from March 21 to 27, 2022, through random sampling of
+residential addresses and weighted to represent the U.S. population by
+gender, race, and other demographics.
+
+\hypertarget{theory-and-hypotheses}{%
+\section{Theory and Hypotheses}\label{theory-and-hypotheses}}
+
+Using the available ATP Wave 105 data, we want to answer this question:
+what effect has social media had on democracy in the eyes of adults in
+the United States? In other words, how is American satisfaction with
+U.S. democracy related to their opinions on social media's impact on
+democracy? Our report draws from a broader Pew Research Center report by
+Wike et al.~published in December 2022 that observes the trend in
+attitudes toward social media and its effects on democracy in several
+countries across the globe. The study used the ATP Wave 105 data for the
+U.S. and randomized phone surveys for non-U.S. countries and found that
+social media was perceived as ``mostly good'' by most countries in
+general, except the United States. Attitudes toward social media's
+effect on democracy are further explored more specifically through
+survey questions asking about social media's impact on positive
+outcomes, such as better informing people, and negative outcomes, such
+as manipulating people.
+
+Here, we focus on the United States and make the causal assumption that
+low American satisfaction with democracy in the US should have a
+positive correlation with the belief that social media harms democracy
+(and vice versa). We reason that the people who believe social media is
+``bad'' for democracy are also unsatisfied with the US democracy because
+social media contributed to the unsatisfactory democracy.
+
+Based on our assumption, two hypotheses are considered:
+
+\begin{itemize}
+\item
+  \(H_0\) (null hypothesis) - American adult's belief that social media
+  is ``bad'' or ``good'' for democracy does not affect
+  satisfaction/dissatisfaction with democracy.
+\item
+  \(H_1\) (alternative hypothesis) - American adult's belief that social
+  media is ``bad'' or ``good'' for democracy does affect
+  satisfaction/dissatisfaction with democracy.
+\end{itemize}
+
+We would also like to consider a few possible heterogeneous effects:
+
+\begin{itemize}
+\item
+  Posting social/political issues on social media: Do people who post
+  social and political issues on social media believe social media has a
+  ``good'' impact on democracy? (Believing they can use the platform to
+  educate others on issues etc.)
+\item
+  Ideology: are liberal respondents more likely to be dissatisfied with
+  the U.S. democracy? Are moderates more likely to be satisfied?
+\item
+  Age: do older people perceive social media's impacts on democracy more
+  negatively than younger people?
+\item
+  Race: Are non-White minorities less satisfied with the U.S. democracy?
+\end{itemize}
+
+\hypertarget{data-and-visual-analysis}{%
+\section{Data and Visual Analysis}\label{data-and-visual-analysis}}
+
+\hypertarget{data}{%
+\subsection{Data}\label{data}}
+
+The ATP Wave 105 dataset conducted by the Pew Research Center contains
+3,581 observations representing survey questionnaire responses of
+individual U.S. adults and 159 variables corresponding to each question
+on the survey. Our study is observational since we are looking at
+relationships between responses to relevant questions on the ATP Wave
+105 questionnaire.
+
+We selected the following questions and variables to focus on for our
+project:
+
+\texttt{SATISFIED\_DEMOCRACY\_w105}: How satisfied are you with the way
+democracy is working in the U.S?
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  Very satisfied
+\item
+  Somewhat satisfied
+\item
+  Not too satisfied
+\item
+  Not at all satisfied
+\end{enumerate}
+
+\texttt{F\_PARTY\_FINAL}: As of today do you lean more to
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  Republican
+\item
+  Democrat
+\item
+  Independent
+\item
+  Something else
+\end{enumerate}
+
+\texttt{SNSUSE}: Do you use social media sites like Facebook, Twitter,
+or Instagram?
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  Yes, I use social media sites
+\item
+  No, I do not use social media sites
+\end{enumerate}
+
+\texttt{SOCIAL\_DEMOCRACY\_w150}: Overall, when you consider all the
+advantages and disadvantages of social media, would you say social media
+has been
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  More of a GOOD THING for democracy in the U.S.
+\item
+  More of a BAD THING for democracy in the U.S.
+\end{enumerate}
+
+\texttt{SMIMPACT\_BATT}: In general, do you think access to the internet
+and social media has made people more or less
+
+\texttt{SMIMPACT\_INFORMED\_w105}: Informed about current events in our
+country?
+
+\texttt{SMIMPACT\_DIVIDED\_w105}: Divided in their political opinions?
+
+\texttt{SMIMPACT\_MANIPULATE\_w105}: Easy to manipulate with false
+information and rumors?
+
+\texttt{SMIMPACT\_DISCOURSE\_w105}: Civil in the way they talk about
+politics?
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  More
+\item
+  Less
+\item
+  Not had much impact
+\end{enumerate}
+
+We also included variables from the dataset that were not associated
+with any particular question in the survey:
+
+\texttt{F\_AGECAT}: age category of the respondents
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  65+
+\item
+  50-64
+\item
+  30-49
+\item
+  18-29
+\end{enumerate}
+
+\texttt{F\_IDEO}: ideology of the respondents
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  Very conservative
+\item
+  Conservative
+\item
+  Liberal
+\item
+  Moderate
+\item
+  Very liberal
+\end{enumerate}
+
+\texttt{F\_RACECMB}: race the respondent identifies with
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  White
+\item
+  Asian or Asian-American
+\item
+  Black or African-American
+\item
+  Mixed Race
+\item
+  Or some other race
+\end{enumerate}
+
+The original response data ATP Wave 105 dataset was qualitative, i.e.,
+stored as words and phrases. To better observe relationships between the
+variables, we created new variables that quantified the data by
+assigning numerical values representing the responses, which we stored
+into a new, smaller dataset of 11 quantitative variables instead of 159.
+We also created a dataset with 22 variables that included the original
+qualitative responses for the variables. A summary of the variables of
+our quantitative modified dataset is shown below.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.3118}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.6882}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Name
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Description
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{satisfied} & Satisfaction of respondents with Democracy in the
+US on a scale of 1 (not at all satisfied) to 4 (very satisfied) \\
+\texttt{socialuse} & Whether or not respondents use social media sites
+(yes, 1 or no, 0) \\
+\texttt{social\_demo} & Whether respondents think social media is more
+of a GOOD (1) thing or a BAD (0) thing for democracy \\
+\texttt{posting} & Whether or not respondents posted about political or
+social issues on social media on a scale of 1(often) to 4(never) \\
+\texttt{smp\_informed} & If respondents think access to the internet and
+social media makes people more or less informed about current events in
+our country (more, 1, less, 2, not much impact, 3) \\
+\texttt{smn\_manip} & If respondents think access to the internet and
+social media makes people more or less manipulated with false
+information and rumors (more, 1, less, 2, not much impact, 3) \\
+\texttt{smn\_divided} & If respondents think access to the internet and
+social media makes people more or less divided in their political
+opinions (more, 1, less, 2, not much impact, 3) If respondents think
+access to the internet and social media makes people more or less civil
+in the way they talk about politics (more, 1, less, 2, not much impact,
+3) \\
+\texttt{ideology} & The ideology of the respondents on a scale of 1
+(liberal) to 3 (conservative) \\
+\texttt{agecat} & The age category the respondent falls under on a scale
+of 1 to 4 (18-29, 30-49, 50-64, 65+) \\
+\texttt{race} & The race of the respondent (mixed race 1, Asian or Asian
+american 2, some other race 3, Black or African American 4, white 5) \\
+\end{longtable}
+
+We omitted missing values when conducting our the majority of our data
+analyses, since most variables have only small proportion of missing
+values (all under 5 percent). There are 2426 observations that do not
+contain missing values. The \texttt{posting} variable is the only
+exception, which we assume may be due to some respondents being
+uncomfortable disclosing whether or not they post political and social
+issues on social media. (\emph{See Table 1})
+
+\begin{table}[H] \centering 
+  \caption{Proportion of Missing Values} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} ccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Variable & Num\_NAs & Prop\_NAs \\ 
+\hline \\[-1.8ex] 
+posting & $1,008$ & $0.281$ \\ 
+social\_demo & $64$ & $0.018$ \\ 
+satisfied & $20$ & $0.006$ \\ 
+ideology & $72$ & $0.020$ \\ 
+socialuse & $144$ & $0.040$ \\ 
+agecat & $13$ & $0.004$ \\ 
+race & $63$ & $0.018$ \\ 
+smn\_manip & $23$ & $0.006$ \\ 
+smn\_divided & $38$ & $0.011$ \\ 
+smp\_informed & $25$ & $0.007$ \\ 
+smp\_civil & $31$ & $0.009$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+The mean of 0.33 for the \texttt{social\_demo} variable suggests that a
+third of U.S. adults think social media is ``good'' for democracy and
+the majority think social media is ``bad'' for democracy. Most U.S.
+adults are also not very satisfied with the U.S. democracy, based on the
+low mean of 2.23 for \texttt{satisfied}. The averages of the specific
+effects (\texttt{smp\_inform}, \texttt{smp\_divided},
+\texttt{smn\_manip}) of social media on democracy are fairly similar,
+implying that for both positive and negative effects, U.S. adults
+generally think social media has a ``more of an impact'' on those
+effects (manipulation, political division, information) and ``less of an
+impact'' on civil discussions about politics (\texttt{smp\_civil}). The
+majority of respondents in the dataset are between 30 and 64 years of
+age, white, use social media, have a moderate ideology, and rarely post
+about social and political issues on social media. (\emph{See Table 2})
+
+\begin{table}[H] \centering 
+  \caption{Descriptive statistics} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Statistic & \multicolumn{1}{c}{Mean} & \multicolumn{1}{c}{St. Dev.} & \multicolumn{1}{c}{Min} & \multicolumn{1}{c}{Median} & \multicolumn{1}{c}{Max} \\ 
+\hline \\[-1.8ex] 
+posting & 3.05 & 0.91 & 1 & 3 & 4 \\ 
+social\_demo & 0.33 & 0.47 & 0 & 0 & 1 \\ 
+satisfied & 2.23 & 0.80 & 1 & 2 & 4 \\ 
+ideology & 2.08 & 0.78 & 1 & 2 & 3 \\ 
+socialuse & 0.75 & 0.43 & 0 & 1 & 1 \\ 
+agecat & 2.67 & 0.99 & 1 & 3 & 4 \\ 
+race & 4.51 & 1.03 & 1 & 5 & 5 \\ 
+smn\_manip & 1.18 & 0.52 & 1 & 1 & 3 \\ 
+smn\_divided & 1.30 & 0.68 & 1 & 1 & 3 \\ 
+smp\_informed & 1.50 & 0.74 & 1 & 1 & 3 \\ 
+smp\_civil & 2.00 & 0.52 & 1 & 2 & 3 \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+Based on our correlation matrix, the variable \texttt{social\_demo}
+exhibits a positive correlation of 0.19 with the variable
+\texttt{satisfied}. Additionally, \texttt{posting} demonstrates a small
+positive correlation of 0.06 with satisfaction with the U.S. democracy,
+while \texttt{ideology} displays a negative correlation of -0.20,
+suggesting that more respondents with conservative ideologies are more
+likely to be less satisfied with the U.S. democracy. (\emph{See Table
+3})
+
+\begin{table}[H] \centering 
+  \caption{Correlation matrix} 
+  \label{} 
+\small 
+\begin{tabular}{@{\extracolsep{-10pt}} cccccccccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & posting & social\_demo & satisfied & ideology & socialuse & agecat & race & smn\_manip & smn\_divided & smp\_informed & smp\_civil \\ 
+\hline \\[-1.8ex] 
+posting & $1$ & $$-$0.14$ & $0.06$ & $0.08$ & $$ & $$-$0.05$ & $0.03$ & $$-$0.02$ & $0.03$ & $0.07$ & $0.10$ \\ 
+social\_demo & $$-$0.14$ & $1$ & $0.19$ & $$-$0.16$ & $$ & $$-$0.11$ & $$-$0.14$ & $0.12$ & $0.16$ & $$-$0.21$ & $$-$0.04$ \\ 
+satisfied & $0.06$ & $0.19$ & $1$ & $$-$0.20$ & $$ & $$-$0.01$ & $$-$0.07$ & $$-$0.01$ & $0.03$ & $$-$0.11$ & $$-$0.06$ \\ 
+ideology & $0.08$ & $$-$0.16$ & $$-$0.20$ & $1$ & $$ & $0.22$ & $0.11$ & $0.01$ & $$-$0.01$ & $0.07$ & $0$ \\ 
+socialuse & $$ & $$ & $$ & $$ & $1$ & $$ & $$ & $$ & $$ & $$ & $$ \\ 
+agecat & $$-$0.05$ & $$-$0.11$ & $$-$0.01$ & $0.22$ & $$ & $1$ & $0.17$ & $$-$0.02$ & $$-$0.03$ & $0.13$ & $0.01$ \\ 
+race & $0.03$ & $$-$0.14$ & $$-$0.07$ & $0.11$ & $$ & $0.17$ & $1$ & $$-$0.04$ & $$-$0.09$ & $0.02$ & $0.04$ \\ 
+smn\_manip & $$-$0.02$ & $0.12$ & $$-$0.01$ & $0.01$ & $$ & $$-$0.02$ & $$-$0.04$ & $1$ & $0.35$ & $0.14$ & $0.14$ \\ 
+smn\_divided & $0.03$ & $0.16$ & $0.03$ & $$-$0.01$ & $$ & $$-$0.03$ & $$-$0.09$ & $0.35$ & $1$ & $0.08$ & $0.19$ \\ 
+smp\_informed & $0.07$ & $$-$0.21$ & $$-$0.11$ & $0.07$ & $$ & $0.13$ & $0.02$ & $0.14$ & $0.08$ & $1$ & $0.15$ \\ 
+smp\_civil & $0.10$ & $$-$0.04$ & $$-$0.06$ & $0$ & $$ & $0.01$ & $0.04$ & $0.14$ & $0.19$ & $0.15$ & $1$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\hypertarget{exploratory-data-analysis}{%
+\subsection{Exploratory Data Analysis}\label{exploratory-data-analysis}}
+
+We begin by observing the distribution of U.S. adults' satisfaction with
+U.S. democracy.
+
+For the entire dataset, including the small number of respondents who do
+not use social media, the percentage for each response of the total
+number of respondents is displayed in Table 4. The vast majority of the
+responses are around ``2'' and ``3'', which reflects that most
+respondents are either ``Not too satisfied'' (41.7\%) or only ``Somewhat
+satisfied'' (34.5\%) with the U.S. democracy. Note: the last row
+represents the percentage of missing values, which are under 1 percent
+for both tables below.
+
+\begin{table}[H] \centering 
+  \caption{Distribution of Satisfaction with U.S. Democracy} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Satisfaction & \% of Respondents \\ 
+\hline \\[-1.8ex] 
+$1$ & $19.44$ \\ 
+$2$ & $41.66$ \\ 
+$3$ & $34.49$ \\ 
+$4$ & $3.85$ \\ 
+$$ & $0.56$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+Subsetting the data for only those respondents who \emph{do} use social
+media, we still see a similar trend, with a slightly higher percentage
+for ``Not too satisfied'' (about 2 percentage points higher) with U.S.
+democracy.
+
+\begin{table}[H] \centering 
+  \caption{Distribution of Satisfaction with U.S. Democracy among Social Media Users} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Satisfaction & \% of Respondents \\ 
+\hline \\[-1.8ex] 
+$1$ & $18.99$ \\ 
+$2$ & $43.68$ \\ 
+$3$ & $33.19$ \\ 
+$4$ & $3.68$ \\ 
+$$ & $0.46$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+Plotting the percentages by category of satisfaction for all respondents
+and for only respondents that use social media, we again see that the
+distributions are very similar, with the majority of responses in the
+``Not too satisfied'' with U.S. democracy category.
+
+\includegraphics[width=0.5\linewidth]{321FINALv2_files/figure-latex/unnamed-chunk-7-1}
+\includegraphics[width=0.5\linewidth]{321FINALv2_files/figure-latex/unnamed-chunk-7-2}
+
+Now we compare the satisfaction with U.S. democracy of respondents who
+believe social media is more of a bad thing for democracy with that of
+respondents who believe social media is more of a good thing. We subset
+the data into these two groups and observe the trends in the percentage
+of responses for each satisfaction category.
+
+Based on Table 7, the majority of responses (43.61\%) among U.S. adults
+that believe social media is more of a \emph{bad} thing for democracy
+are ``2'', meaning they are ``Not too satisfied'' with U.S. democracy.
+
+\begin{table}[H] \centering 
+  \caption{Satisfaction with U.S. Democracy among Respondents Believing Social Media is Bad for Democracy} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Satisfaction & \% of Respondents \\ 
+\hline \\[-1.8ex] 
+$1$ & $23.67$ \\ 
+$2$ & $43.61$ \\ 
+$4$ & $2.56$ \\ 
+$3$ & $29.77$ \\ 
+$$ & $0.38$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+In contrast, the majority of responses (43.71\%) among U.S. adults that
+believe social media is more of a \emph{good} thing for democracy are
+``3'', meaning they are ``somewhat satisfied'' with U.S. democracy.
+
+\begin{table}[H] \centering 
+  \caption{Satisfaction with U.S. Democracy among Respondents Believing Social Media is Good for Democracy} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Satisfaction & \% of Respondents \\ 
+\hline \\[-1.8ex] 
+$2$ & $38.27$ \\ 
+$3$ & $43.71$ \\ 
+$4$ & $6.38$ \\ 
+$1$ & $11.31$ \\ 
+$$ & $0.34$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+Comparing the percentage of respondents who responded ``Not too
+satisfied'' for the two tables, the percentage of respondents who
+believe social media is more of a good thing for democracy is 5.35
+percentage points lower than that of respondents who believe social
+media is more of a bad thing for democracy.
+
+The bar plots help illustrate our observations. Comparing the two bar
+plots, we see that the distribution for respondents believing social
+media is bad for democracy is slightly more skewed right, while the
+distribution for respondents believing social media is good for
+democracy is slightly more skewed to the left. The skewed distributions
+indicate that those who believe social media is good for democracy are
+more likely to be satisfied with U.S. democracy and those who believe
+social media is bad for democracy are less likely satisfied with the
+U.S. democracy.
+
+\includegraphics[width=0.5\linewidth]{321FINALv2_files/figure-latex/unnamed-chunk-11-1}
+\includegraphics[width=0.5\linewidth]{321FINALv2_files/figure-latex/unnamed-chunk-11-2}
+
+For more specific impacts of social media, the Pew Research study
+considers the variables \texttt{smp\_informed} and \texttt{smp\_civil}
+good impacts of social media and \texttt{smn\_manip} and
+\texttt{smn\_divided} bad impacts of social media on democracy (see the
+table on page 4 for descriptions of the variables). We presume that
+respondents who believe social media is good for democracy will more
+likely believe that social media has ``more of an impact'' (coded as a 1
+in our quantitative variable) on the ``good'' variables and less of an
+impact or no impact (2 or 3) on the ``bad'' variables. The opposite
+might be true for respondents believing social media has an overall bad
+impact on democracy.
+
+\begin{table}[H] \centering 
+  \caption{Social Media's Specific Impacts for Respondents Believing Social Media is Good for Democracy} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Impact & Mean \\ 
+\hline \\[-1.8ex] 
+smp\_civil & $1.97$ \\ 
+smp\_informed & $1.28$ \\ 
+smn\_manip & $1.27$ \\ 
+smn\_divided & $1.45$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\begin{table}[H] \centering 
+  \caption{Social Media's Specific Impacts for Respondents Believing Social Media is Bad for Democracy} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Impact & Mean \\ 
+\hline \\[-1.8ex] 
+smp\_civil & $2.02$ \\ 
+smp\_informed & $1.62$ \\ 
+smn\_manip & $1.13$ \\ 
+smn\_divided & $1.22$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+According to the values in the table, respondents believing social media
+is good for democracy think social media's ability to manipulate is the
+strongest impact and much less of an impact on informing people on
+current events going on in the country. We do, however, see a slight
+difference for respondents who believe social media is bad for democracy
+- the means for the ``good'' impacts (\texttt{smp\_civil} and
+\texttt{smp\_informed}) are visibly greater than the means for the
+``bad'' impacts, supporting the idea that those who believe social media
+is bad for democracy think social media's ``bad'' abilities to
+manipulate and divide is stronger than its ``good'' abilities to inform
+and promote civil discourse. In general, the means for all four
+variables are somewhat similar, suggesting that respondents' belief in
+whether social media is overall good or bad for democracy is not largely
+based on the defined ``good'' and ``bad'' specific impacts. (\emph{See
+Tables 9 and 10})
+
+We are also interested in observing possible differences in satisfaction
+and belief that social media is good or bad for democracy by race,
+political ideology, age category, and whether the respondents post
+social and political issues on social media.
+
+The mean satisfaction by race for respondents believing social media is
+good for democracy are overall similar (mostly not too satisfied or only
+somewhat satisfied with U.S. democracy) and slightly higher than the
+satisfaction of respondents believing social media is bad. Those who are
+mixed race and believe social media is bad for democracy have the lowest
+satisfaction (mean of 1.98) with U.S. democracy.
+
+\begin{table}[ht]
+\centering
+\caption{Respondents Believing Social Media is Good
+             and Mean Satisfaction by Race} 
+\begin{tabular}{lr}
+  \hline
+Race & Mean Satisfaction \\ 
+  \hline
+Asian or Asian-American & 2.51 \\ 
+  Black or African-American & 2.40 \\ 
+  Mixed Race & 2.45 \\ 
+  Or some other race & 2.55 \\ 
+  White & 2.38 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\begin{table}[ht]
+\centering
+\caption{Respondents Believing Social Media is Bad
+             and Mean Satisfaction by Race} 
+\begin{tabular}{lr}
+  \hline
+Race & Mean Satisfaction \\ 
+  \hline
+Asian or Asian-American & 2.25 \\ 
+  Black or African-American & 2.31 \\ 
+  Mixed Race & 1.98 \\ 
+  Or some other race & 2.30 \\ 
+  White & 2.07 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Respondents Believing Social Media is Good
+             and Mean Satisfaction by Ideology} 
+\begin{tabular}{rr}
+  \hline
+Ideology & Mean Satisfaction \\ 
+  \hline
+1.00 & 2.39 \\ 
+  2.00 & 2.57 \\ 
+  3.00 & 2.16 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\begin{table}[ht]
+\centering
+\caption{Respondents Believing Social Media is Bad
+             and Mean Satisfaction by Ideology} 
+\begin{tabular}{rr}
+  \hline
+Ideology & Mean Satisfaction \\ 
+  \hline
+1.00 & 2.30 \\ 
+  2.00 & 2.22 \\ 
+  3.00 & 1.86 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\begin{table}[ht]
+\centering
+\caption{Respondents Believing Social Media is Good
+             and Mean Satisfaction by Age Category} 
+\begin{tabular}{lr}
+  \hline
+Age Category & Mean Satisfaction \\ 
+  \hline
+18-29 & 2.27 \\ 
+  30-49 & 2.41 \\ 
+  50-64 & 2.54 \\ 
+  65+ & 2.37 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\begin{table}[ht]
+\centering
+\caption{Respondents Believing Social Media is Bad
+             and Mean Satisfaction by Age Category} 
+\begin{tabular}{lr}
+  \hline
+Age Category & Mean Satisfaction \\ 
+  \hline
+18-29 & 2.09 \\ 
+  30-49 & 2.14 \\ 
+  50-64 & 2.07 \\ 
+  65+ & 2.07 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Respondents Believing Social Media is Good
+             and Mean Satisfaction by How Often They Post Issues} 
+\begin{tabular}{lr}
+  \hline
+Frequency of Posting & Mean Satisfaction \\ 
+  \hline
+Never & 2.42 \\ 
+  Often & 2.02 \\ 
+  Rarely & 2.48 \\ 
+  Sometimes & 2.42 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\begin{table}[ht]
+\centering
+\caption{Respondents Believing Social Media is Bad
+             and Mean Satisfaction by How Often They Post Issues} 
+\begin{tabular}{lr}
+  \hline
+Frequency of Posting & Mean Satisfaction \\ 
+  \hline
+Never & 2.12 \\ 
+  Often & 1.72 \\ 
+  Rarely & 2.17 \\ 
+  Sometimes & 2.01 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\hypertarget{statistical-analysis}{%
+\section{Statistical Analysis}\label{statistical-analysis}}
+
+\hypertarget{linear-regression-analysis}{%
+\subsection{Linear Regression
+Analysis}\label{linear-regression-analysis}}
+
+We will run a linear regression analysis of believing whether social
+media is good or bad for democracy on satisfaction with U.S. democracy.
+
+For our first model, we do not include race, ideology, or other
+variables in the regression. The p-value for this model is well below
+the 5\% threshold, so the null hypothesis can be rejected and the belief
+of social media's impact on democracy does have an effect on
+satisfaction with democracy. The \(beta_1\) coefficient in the model
+(0.3245) suggests a positive correlation between our two variables,
+meaning those who believe social media has more of a good effect on
+democracy have slightly higher satisfaction ratings of U.S. democracy.
+
+\begin{table}[ht]
+\centering
+\caption{Model 1} 
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\ 
+  \hline
+(Intercept) & 2.0918 & 0.0195 & 107.02 & 0.0000 \\ 
+  social\_demo & 0.3245 & 0.0316 & 10.26 & 0.0000 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+We then add in the other factors, beginning with race, then followed by
+age category, ideology, and how often the respondent posts social or
+political issues on social media.
+
+Adding race:
+
+\begin{table}[ht]
+\centering
+\caption{Model 2} 
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\ 
+  \hline
+(Intercept) & 2.0469 & 0.0822 & 24.90 & 0.0000 \\ 
+  factor(social\_demo)1 & 0.2933 & 0.0324 & 9.05 & 0.0000 \\ 
+  factor(race)2 & 0.1841 & 0.1047 & 1.76 & 0.0788 \\ 
+  factor(race)3 & 0.2446 & 0.1089 & 2.25 & 0.0248 \\ 
+  factor(race)4 & 0.1649 & 0.0943 & 1.75 & 0.0805 \\ 
+  factor(race)5 & 0.0288 & 0.0830 & 0.35 & 0.7288 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+Race, Ideology, and Age Category:
+
+\begin{table}[ht]
+\centering
+\caption{Model 3} 
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\ 
+  \hline
+(Intercept) & 1.9783 & 0.0898 & 22.03 & 0.0000 \\ 
+  factor(social\_demo)1 & 0.2980 & 0.0326 & 9.14 & 0.0000 \\ 
+  factor(race)2 & 0.1809 & 0.1049 & 1.73 & 0.0846 \\ 
+  factor(race)3 & 0.2384 & 0.1090 & 2.19 & 0.0289 \\ 
+  factor(race)4 & 0.1548 & 0.0947 & 1.64 & 0.1022 \\ 
+  factor(race)5 & 0.0224 & 0.0834 & 0.27 & 0.7883 \\ 
+  factor(agecat)2 & 0.0904 & 0.0489 & 1.85 & 0.0646 \\ 
+  factor(agecat)3 & 0.0918 & 0.0516 & 1.78 & 0.0757 \\ 
+  factor(agecat)4 & 0.0638 & 0.0550 & 1.16 & 0.2465 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+Race, Ideology, Age Category, and Posting:
+
+\begin{table}[ht]
+\centering
+\caption{Model 4} 
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\ 
+  \hline
+(Intercept) & 1.7210 & 0.1072 & 16.06 & 0.0000 \\ 
+  factor(social\_demo)1 & 0.2803 & 0.0325 & 8.64 & 0.0000 \\ 
+  factor(race)2 & 0.1123 & 0.1026 & 1.09 & 0.2737 \\ 
+  factor(race)3 & 0.1781 & 0.1067 & 1.67 & 0.0954 \\ 
+  factor(race)4 & 0.0733 & 0.0932 & 0.79 & 0.4315 \\ 
+  factor(race)5 & 0.0059 & 0.0818 & 0.07 & 0.9425 \\ 
+  factor(agecat)2 & 0.1216 & 0.0482 & 2.52 & 0.0117 \\ 
+  factor(agecat)3 & 0.1587 & 0.0513 & 3.09 & 0.0020 \\ 
+  factor(agecat)4 & 0.1681 & 0.0550 & 3.05 & 0.0023 \\ 
+  factor(ideology)2 & -0.0160 & 0.0387 & -0.41 & 0.6798 \\ 
+  factor(ideology)3 & -0.3659 & 0.0407 & -8.99 & 0.0000 \\ 
+  factor(posting)2 & 0.3215 & 0.0695 & 4.63 & 0.0000 \\ 
+  factor(posting)3 & 0.4284 & 0.0654 & 6.55 & 0.0000 \\ 
+  factor(posting)4 & 0.3966 & 0.0659 & 6.02 & 0.0000 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\hypertarget{results-discussion}{%
+\subsection{Results Discussion}\label{results-discussion}}
+
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
+
+\hypertarget{citations-and-relevant-literature}{%
+\section{Citations and Relevant
+Literature}\label{citations-and-relevant-literature}}
+
+Dixon, Stacy Jo. Social Media Usage in the United States - Statistics \&
+Facts, Statista, 18 Dec.~2023,
+\url{https://www.statista.com/topics/3196/social-media-usage-in-the-united-states/\#topicOverview}.
+
+Wike, Richard, et al.~``Social Media Seen as Mostly Good for Democracy
+across Many Nations, but U.S. Is a Major Outlier.'' Pew Research
+Center's Global Attitudes Project, Pew Research Center, 6 Dec.~2022,
+\url{https://www.pewresearch.org/global/2022/12/06/social-media-seen-as-mostly-good-for-democracy-across-many-nations-but-u-s-is-a-major-outlier/}.
+
+\hypertarget{dataset}{%
+\subsection{Dataset}\label{dataset}}
+
+American Trends Panel Wave 105
+\url{https://www.pewresearch.org/global/dataset/american-trends-panel-wave-105/}
+
+\end{document}

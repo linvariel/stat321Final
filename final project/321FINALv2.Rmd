@@ -1,0 +1,703 @@
+---
+title: "321 Final Project"
+author: "Ariel Lin and Naomi Le Mouel"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+---
+title: "321 Final Project"
+author: "Ariel Lin and Naomi Le Mouel"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
+
+# load libraries
+library(tinytex)
+library(questionr)
+library(broom)
+library(stargazer)
+library(tidyverse)
+library(data.table)
+library(xtable)
+
+rm(list = ls())
+
+
+# load data
+socDem_raw <- read_csv("socialDemo.csv")
+```
+
+```{r, include=FALSE}
+#cleaning data
+vars_of_interest <- c("SATISFIED_DEMOCRACY_W105","SNSUSE_W105",
+                      "POST_ISSUES_W105","SOCIAL_DEMOCRACY_W105",
+                      "F_AGECAT", "F_IDEO","F_RACECMB",
+                      "SMIMPACT_INFORMED_W105","SMIMPACT_DISCOURSE_W105",
+                      "SMIMPACT_MANIPULATE_W105","SMIMPACT_DIVIDED_W105")
+
+socDem <- socDem_raw[,(names(socDem_raw) %in% vars_of_interest)]
+
+#quantifying data
+#variables of interest
+  #General 
+socDem$social_demo <- (
+  ifelse(socDem$SOCIAL_DEMOCRACY_W105 == "More of a GOOD THING for democracy in the U.S.", 1,
+  ifelse(socDem$SOCIAL_DEMOCRACY_W105 == "More of a BAD THING for democracy in the U.S.", 0, 
+  NA)))
+
+  #Specifics: positive
+socDem$smp_informed <- (ifelse(socDem$SMIMPACT_INFORMED_W105 == "More", 1,
+                          ifelse(socDem$SMIMPACT_INFORMED_W105 == "Less", 2,
+                          ifelse(socDem$SMIMPACT_INFORMED_W105 == "Not had much impact", 3,
+                          NA))))
+
+socDem$smp_civil <- (ifelse(socDem$SMIMPACT_DISCOURSE_W105 == "More", 1,
+                          ifelse(socDem$SMIMPACT_DISCOURSE_W105 == "Less", 2,
+                          ifelse(socDem$SMIMPACT_DISCOURSE_W105 == "Not had much impact", 3, 
+                          NA))))
+  #Specifics: negative
+socDem$smn_manip <- (ifelse(socDem$SMIMPACT_MANIPULATE_W105 == "More", 1,
+                          ifelse(socDem$SMIMPACT_MANIPULATE_W105 == "Less", 2,
+                          ifelse(socDem$SMIMPACT_MANIPULATE_W105 == "Not had much impact", 3, 
+                          NA))))
+
+socDem$smn_divided <- (ifelse(socDem$SMIMPACT_DIVIDED_W105 == "More", 1,
+                          ifelse(socDem$SMIMPACT_DIVIDED_W105 == "Less", 2,
+                          ifelse(socDem$SMIMPACT_DIVIDED_W105 == "Not had much impact", 3, 
+                          NA))))
+
+#Dependent
+socDem$satisfied <- (ifelse(socDem$SATISFIED_DEMOCRACY_W105 == "Very satisfied", 4,
+                          ifelse(socDem$SATISFIED_DEMOCRACY_W105 == "Somewhat satisfied", 3,
+                          ifelse(socDem$SATISFIED_DEMOCRACY_W105 == "Not too satisfied", 2, 
+                          ifelse(socDem$SATISFIED_DEMOCRACY_W105 == "Not at all satisfied", 1, 
+                          NA)))))
+
+#Systematically different groups
+socDem$socialuse <- (ifelse(socDem$SNSUSE_W105 == "Yes, I use social media sites", 1,
+                            ifelse(socDem$SNSUSE_W105 == "No, I do not use social media sites", 0,
+                            NA)))
+
+
+#Other variables (possible heterogeneous treatment effects)
+socDem$ideology <- (ifelse(socDem$F_IDEO == "Liberal" | socDem$F_IDEO == "Very liberal" , 1,
+                      ifelse(socDem$F_IDEO == "Moderate", 2,
+                      ifelse(socDem$F_IDEO == "Conservative" | socDem$F_IDEO == "Very conservative", 3,
+                      NA))))
+  #Is ideology related to satisfaction with democracy? 
+
+socDem$posting <- (ifelse(socDem$POST_ISSUES_W105 == "Often", 1,
+                          ifelse(socDem$POST_ISSUES_W105 == "Sometimes", 2, 
+                          ifelse(socDem$POST_ISSUES_W105 == "Rarely", 3,
+                          ifelse(socDem$POST_ISSUES_W105 == "Never", 4, 
+                          NA)))))
+  #Do people who post social and political issues on social media believe social media has a "good"
+  #impact on democracy? (Believing they can use the platform to educate others on issues etc.)
+
+socDem$agecat <- (ifelse(socDem$F_AGECAT == "18-29", 1,
+                         ifelse(socDem$F_AGECAT == "30-49", 2,
+                         ifelse(socDem$F_AGECAT == "50-64", 3,
+                         ifelse(socDem$F_AGECAT == "65+", 4,
+                         NA)))))
+  #Do older people perceive social media's impacts on democracy more negatively than younger people?
+
+socDem$race <- (ifelse(socDem$F_RACECMB == "Mixed Race", 1,
+                       ifelse(socDem$F_RACECMB == "Asian or Asian-American", 2,
+                       ifelse(socDem$F_RACECMB == "Or some other race", 3,
+                       ifelse(socDem$F_RACECMB == "Black or African-American", 4,
+                       ifelse(socDem$F_RACECMB == "White", 5,
+                       NA))))))
+  #Are non-White minorities less satisfied with the U.S. democracy?
+
+
+#only quantitative variables
+dat_socDem <- socDem[,c("posting","social_demo","satisfied","ideology","socialuse","agecat","race",
+                        "smn_manip","smn_divided","smp_informed","smp_civil")]
+
+#looking at the data
+summary(dat_socDem)
+freq.na(dat_socDem) # the relative and absolute NAs for each variable
+
+```
+
+
+# Introduction
+
+
+Social media has a powerful presence in American lives. According to data from Statista, there are over 300 million social media users in the United States. Media platforms are used for many purposes, including entertainment, socialization, business, education, and news. Around half of the US population gets their news information from social media, according to a 2021 study conducted by the Pew Research Center. With so many media influencers and users, there is a lot of room for misinformation, fake news, propaganda, and online discourse, which can often concern political topics such as presidential elections. 
+
+In this report, we examine the potential relationship between Americans’ satisfaction with U.S. democracy and their opinions on social media’s impact on democracy. The data used in this report is from the Pew Research Center’s American Trends Panel (ATP) Wave 105, which surveyed 3,581 U.S. adults from March 21 to 27, 2022, through random sampling of residential addresses and weighted to represent the U.S. population by gender, race, and other demographics.  
+
+
+# Theory and Hypotheses
+
+
+Using the available ATP Wave 105 data, we want to answer this question: what effect has social media had on democracy in the eyes of adults in the United States? In other words, how is American satisfaction with U.S. democracy related to their opinions on social media's impact on democracy? 
+Our report draws from a broader Pew Research Center report by Wike et al. published in December 2022 that observes the trend in attitudes toward social media and its effects on democracy in several countries across the globe. The study used the ATP Wave 105 data for the U.S. and randomized phone surveys for non-U.S. countries and found that social media was perceived as “mostly good” by most countries in general, except the United States. Attitudes toward social media’s effect on democracy are further explored more specifically through survey questions asking about social media’s impact on positive outcomes, such as better informing people, and negative outcomes, such as manipulating people.
+
+Here, we focus on the United States and make the causal assumption that low American satisfaction with democracy in the US should have a positive correlation with the belief that social media harms democracy (and vice versa). We reason that the people who believe social media is “bad” for democracy are also unsatisfied with the US democracy because social media contributed to the unsatisfactory democracy.
+
+Based on our assumption, two hypotheses are considered:
+
+- $H_0$ (null hypothesis) - American adult’s belief that social media is “bad” or “good” for democracy does not affect satisfaction/dissatisfaction with democracy.
+
+- $H_1$ (alternative hypothesis) - American adult’s belief that social media is “bad” or “good” for democracy does affect satisfaction/dissatisfaction with democracy.
+
+We would also like to consider a few possible heterogeneous effects: 
+
+* Posting social/political issues on social media: Do people who post social and political issues on social media believe social media has a "good" impact on democracy? (Believing they can use the platform to educate others on issues etc.)
+  
+* Ideology: are liberal respondents more likely to be dissatisfied with the U.S. democracy? Are moderates more likely to be satisfied?
+
+* Age: do older people perceive social media's impacts on democracy more negatively than younger people?
+
+* Race: Are non-White minorities less satisfied with the U.S. democracy?
+
+
+# Data and Visual Analysis
+
+## Data
+
+The ATP Wave 105 dataset conducted by the Pew Research Center contains 3,581 observations representing survey questionnaire responses of individual U.S. adults and 159 variables corresponding to each question on the survey. Our study is observational since we are looking at relationships between responses to relevant questions on the ATP Wave 105 questionnaire.
+
+We selected the following questions and variables to focus on for our project:
+
+`SATISFIED_DEMOCRACY_w105`: How satisfied are you with the way democracy is working in the U.S?
+
+1) Very satisfied
+
+2) Somewhat satisfied
+
+3) Not too satisfied
+
+4) Not at all satisfied
+
+`F_PARTY_FINAL`: As of today do you lean more to
+
+1) Republican
+
+2) Democrat
+
+3) Independent
+
+4) Something else
+
+`SNSUSE`: Do you use social media sites like Facebook, Twitter, or Instagram?
+
+1) Yes, I use social media sites
+
+2) No, I do not use social media sites
+
+`SOCIAL_DEMOCRACY_w150`: Overall, when you consider all the advantages and disadvantages of social media, would you say social media has been
+
+1) More of a GOOD THING for democracy in the U.S.
+
+2) More of a BAD THING for democracy in the U.S.
+
+`SMIMPACT_BATT`: In general, do you think access to the internet and social media has made people more or less
+
+  `SMIMPACT_INFORMED_w105`: Informed about current events in our country?
+  
+  `SMIMPACT_DIVIDED_w105`: Divided in their political opinions?
+  
+  `SMIMPACT_MANIPULATE_w105`: Easy to manipulate with false information and rumors?
+  
+  `SMIMPACT_DISCOURSE_w105`: Civil in the way they talk about politics?
+  
+  1) More
+  
+  2) Less
+  
+  3) Not had much impact
+
+We also included variables from the dataset that were not associated with any particular question in the survey:
+
+`F_AGECAT`: age category of the respondents
+
+1) 65+
+
+2) 50-64
+
+3) 30-49
+
+4) 18-29
+
+`F_IDEO`: ideology of the respondents
+
+1) Very conservative
+
+2) Conservative
+
+3) Liberal
+
+4) Moderate
+
+5) Very liberal
+
+`F_RACECMB`: race the respondent identifies with
+
+1) White
+
+2) Asian or Asian-American
+
+3) Black or African-American
+
+4) Mixed Race
+
+5) Or some other race
+
+
+The original response data ATP Wave 105 dataset was qualitative, i.e., stored as words and phrases. To better observe relationships between the variables, we created new variables that quantified the data by assigning numerical values representing the responses, which we stored into a new, smaller dataset of 11 quantitative variables instead of 159. We also created a dataset with 22 variables that included the original qualitative responses for the variables. A summary of the variables of our quantitative modified dataset is shown below.
+
+-------------------------    ---------------------------------------------------------------
+Name                         Description
+
+-------------------------    ---------------------------------------------------------------
+`satisfied`                  Satisfaction of respondents with Democracy in the US on a scale 
+                             of 1 (not at all satisfied) to 4 (very satisfied)
+
+
+`socialuse`                  Whether or not respondents use social media sites (yes, 1 or no,
+                             0)
+
+
+`social_demo`                Whether respondents think social media is more of a GOOD (1) 
+                             thing or a BAD (0) thing for democracy 
+
+
+`posting`                    Whether or not respondents posted about political or social 
+                             issues on social media on a scale of 1(often) to 4(never)
+          
+`smp_informed`               If respondents think access to the internet and social media 
+                             makes people more or less informed about current events in our 
+                             country (more, 1, less, 2, not much impact, 3)
+            
+`smn_manip`                  If respondents think access to the internet and social media 
+                             makes people more or less manipulated with false information
+                             and rumors (more, 1, less, 2, not much impact, 3)
+                 
+`smn_divided`                If respondents think access to the internet and social media 
+                             makes people more or less divided in their political opinions (more, 1, less, 2, not much impact, 3)
+`smp_civil`                  If respondents think access to the internet and social media 
+                             makes people more or less civil in the way they talk about
+                             politics (more, 1, less, 2, not much impact, 3)
+                        
+`ideology`                   The ideology of the respondents on a scale of 1 (liberal) to 3 (conservative)
+
+`agecat`                     The age category the respondent falls under on a scale of 1 to 4 (18-29, 30-49, 50-64,
+                             65+)
+
+`race`                       The race of the respondent (mixed race 1, Asian or Asian american 2, some other race 3, Black or African American 4, white 5)
+--------------------------------------------------------------------------------
+We omitted missing values when conducting our the majority of our data analyses, since most variables have only small proportion of missing values (all under 5 percent). There are 2426 observations that do not contain missing values. The `posting` variable is the only exception, which we assume may be due to some respondents being uncomfortable disclosing whether or not they post political and social issues on social media. (*See Table 1*)
+
+```{r, echo=FALSE, results='asis',fig.show='hold',out.width='70%'}
+prop_na_table <- as.data.frame(tibble(Variable = names(dat_socDem), Num_NAs = colSums(is.na(dat_socDem)), 
+       Prop_NAs = (colSums(is.na(dat_socDem))/nrow(dat_socDem))))
+
+stargazer(prop_na_table,
+          header=FALSE,
+          summary=FALSE,
+          rownames = FALSE,
+          type="latex",
+          title="Proportion of Missing Values",
+          table.placement = "H")
+
+```
+
+The mean of 0.33 for the `social_demo` variable suggests that a third of U.S. adults think social media is “good” for democracy and the majority think social media is “bad” for democracy. Most U.S. adults are also not very satisfied with the U.S. democracy, based on the low mean of 2.23 for `satisfied`. The averages of the specific effects (`smp_inform`, `smp_divided`, `smn_manip`) of social media on democracy are fairly similar, implying that for both positive and negative effects, U.S. adults generally think social media has a “more of an impact” on those effects (manipulation, political division, information) and “less of an impact” on civil discussions about politics (`smp_civil`). The majority of respondents in the dataset are between 30 and 64 years of age, white, use social media, have a moderate ideology, and rarely post about social and political issues on social media. (*See Table 2*)
+
+```{r, results='asis', echo=FALSE, message=FALSE}
+# Display well-formatted table using stargazer
+
+stargazer(as.data.frame(dat_socDem), # input the object "as.data.frame" for descriptives
+          summary.stat = c("mean","sd","min","median","max"),
+          type="latex",
+          header = FALSE,
+          title = "Descriptive statistics",
+          digits = 2,
+          table.placement = "H")
+
+```
+
+Based on our correlation matrix, the variable `social_demo` exhibits a positive correlation of 0.19 with the variable `satisfied`. Additionally, `posting` demonstrates a small positive correlation of 0.06 with satisfaction with the U.S. democracy, while `ideology` displays a negative correlation of -0.20, suggesting that more respondents with conservative ideologies are more likely to be less satisfied with the U.S. democracy. (*See Table 3*)
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE, error=FALSE}
+
+# Display a correlation matrix
+
+# create an object with the correlation matrix
+dat_socDem_noNA <- na.omit(dat_socDem)
+
+dat_cor <- cor(dat_socDem_noNA)
+
+# Now we need to format the correlation matrix, start rounding the digits
+
+dat_cor <- round(dat_cor, digits = 2)
+
+# display the correlation matrix in a formmatted table using stargazer
+
+stargazer(dat_cor, 
+          type="latex",
+          title = "Correlation matrix",
+          font.size = "small",
+          column.sep.width = "-10pt",
+          header = FALSE, 
+          digits = 2,table.placement = "H")
+
+```
+
+## Exploratory Data Analysis
+
+We begin by observing the distribution of U.S. adults' satisfaction with U.S. democracy.
+
+For the entire dataset, including the small number of respondents who do not use social media, the percentage for each response of the total number of respondents is displayed in Table 4. The vast majority of the responses are around "2" and "3", which reflects that most respondents are either "Not too satisfied" (41.7%) or only "Somewhat satisfied" (34.5%) with the U.S. democracy. Note: the last row represents the percentage of missing values, which are under 1 percent for both tables below.
+
+```{r, echo=FALSE, results='asis', float=FALSE}
+#subset data so all respondents use social media
+usesm_socDem <- subset(dat_socDem, dat_socDem$socialuse > 0)
+
+all <- as.data.table(dat_socDem$satisfied, useNA = 'always')
+sm_use <- as.data.table(usesm_socDem$satisfied, useNA = 'always')
+
+#tables
+table_all <- all[, .(Percentage = .N / nrow(all) * 100), by = dat_socDem$satisfied]
+names(table_all) <- c("Satisfaction","% of Respondents")
+
+stargazer(as.data.frame(table_all), # input the object "as.data.frame" for descriptives
+          summary=FALSE,
+          type="latex",
+          rownames=FALSE,
+          header = FALSE,
+          title = "Distribution of Satisfaction with U.S. Democracy",
+          digits = 2,
+          table.placement = "H")
+
+```
+
+Subsetting the data for only those respondents who *do* use social media, we still see a similar trend, with a slightly higher percentage for "Not too satisfied" (about 2 percentage points higher) with U.S. democracy.
+
+```{r, echo=FALSE, results='asis', float=FALSE}
+table_sm <- sm_use[, .(Percentage = .N / nrow(sm_use) * 100), by = usesm_socDem$satisfied]
+names(table_sm) <- c("Satisfaction","% of Respondents")
+
+stargazer(as.data.frame(table_sm), # input the object "as.data.frame" for descriptives
+          summary=FALSE,
+          type="latex",
+          rownames=FALSE,
+          header = FALSE,
+          title = "Distribution of Satisfaction with U.S. Democracy among Social Media Users",
+          digits = 2,
+          table.placement = "H")
+```
+
+Plotting the percentages by category of satisfaction for all respondents and for only respondents that use social media, we again see that the distributions are very similar, with the majority of responses in the "Not too satisfied" with U.S. democracy category.
+
+```{r, echo=FALSE, fig.show='hold', out.width='50%'}
+#Use vs Don't use social media
+table_sm <- sm_use[, .(Percentage = .N / nrow(sm_use) * 100), by = usesm_socDem$satisfied]
+
+barplot(Percentage ~ usesm_socDem, table_sm,
+        main = "Percentage of Social Media Users' \n Satisfaction with American Democracy",
+        xlab = "Categories of Satisfaction", names = c("Not at all", "Not too Satisfied", "Somewhat", "Very         Satisfied"),
+        ylab = "Percentage of Respondents", ylim = c(0, 50), 
+        col="#93affa")
+
+table_all <- all[, .(Percentage = .N / nrow(all) * 100), by = dat_socDem$satisfied]
+
+barplot(Percentage ~ dat_socDem, table_all,
+        main = "Percentage of All Respondents' \n Satisfaction with American Democracy",
+        xlab = "Categories of Satisfaction", names = c("Not at all", "Not too Satisfied", "Somewhat", "Very         Satisfied"),
+        ylab = "Percentage of Respondents", ylim = c(0, 50),
+        col="#93affa")
+```
+
+Now we compare the satisfaction with U.S. democracy of respondents who believe social media is more of a bad thing for democracy with that of respondents who believe social media is more of a good thing. We subset the data into these two groups and observe the trends in the percentage of responses for each satisfaction category.
+
+Based on Table 7, the majority of responses (43.61%) among U.S. adults that believe social media is more of a *bad* thing for democracy are "2", meaning they are "Not too satisfied" with U.S. democracy.
+
+```{r, echo=FALSE, results='asis', float=FALSE}
+#Subset data by GOOD or BAD
+B <- subset(dat_socDem, dat_socDem$social_demo == 0)
+G <- subset(dat_socDem, dat_socDem$social_demo == 1)
+
+BAD <- as.data.table(B$satisfied, useNA = 'always')
+GOOD <- as.data.table(G$satisfied, useNA = 'always')
+
+#tables
+table_BAD <- BAD[, .(Percentage = .N / nrow(BAD) * 100), by = B$satisfied]
+names(table_BAD) <- c("Satisfaction","% of Respondents")
+
+stargazer(table_BAD, # input the object "as.data.frame" for descriptives
+          summary=FALSE,
+          type="latex",
+          rownames=FALSE,
+          header = FALSE,
+          title = "Satisfaction with U.S. Democracy among Respondents Believing Social Media is Bad for Democracy",
+          digits = 2,
+          table.placement = "H")
+
+```
+
+In contrast, the majority of responses (43.71%) among U.S. adults that believe social media is more of a *good* thing for democracy are "3", meaning they are "somewhat satisfied" with U.S. democracy.
+
+```{r, echo=FALSE, results='asis', float=FALSE}
+table_GOOD <- GOOD[, .(Percentage = .N / nrow(GOOD) * 100), by = G$satisfied]
+names(table_GOOD) <- c("Satisfaction","% of Respondents")
+
+stargazer(table_GOOD, # input the object "as.data.frame" for descriptives
+          summary=FALSE,
+          type="latex",
+          rownames=FALSE,
+          header = FALSE,
+          title = "Satisfaction with U.S. Democracy among Respondents Believing Social Media is Good for Democracy",
+          digits = 2,
+          table.placement = "H")
+```
+
+Comparing the percentage of respondents who responded "Not too satisfied" for the two tables, the percentage of respondents who believe social media is more of a good thing for democracy is 5.35 percentage points lower than that of respondents who believe social media is more of a bad thing for democracy. 
+
+```{r, include=FALSE}
+#Difference in percentages for responding 2 (Not too satisfied)
+#responded 2 GOOD
+table_GOOD[,2][1] - table_BAD[,2][2]
+#  -5.348534
+```
+
+The bar plots help illustrate our observations. Comparing the two bar plots, we see that the distribution for respondents believing social media is bad for democracy is slightly more skewed right, while the distribution for respondents believing social media is good for democracy is slightly more skewed to the left. The skewed distributions indicate that those who believe social media is good for democracy are more likely to be satisfied with U.S. democracy and those who believe social media is bad for democracy are less likely satisfied with the U.S. democracy.
+
+```{r, echo=FALSE, fig.show='hold', out.width='50%'}
+
+table_GOOD <- GOOD[, .(Percentage = .N / nrow(GOOD) * 100), by = G$satisfied]
+table_BAD <- BAD[, .(Percentage = .N / nrow(BAD) * 100), by = B$satisfied]
+
+#Thought SM was Good vs Bad for US democracy
+barplot(Percentage ~ B, table_BAD,
+        main = "Percentage of Respondents who Think Social Media \n has a Negative Effect on American Democracy and \n their Satisfaction with American Democracy",
+        xlab = "Categories of Satisfaction", names = c("Not at all", "Not too Satisfied", "Somewhat", "Very         Satisfied"),
+        ylab = "Percentage of Respondents", ylim = c(0, 50),
+        col="#e08b8b")
+
+barplot(Percentage ~ G, table_GOOD,
+        main = "Percentage of Respondents who Think Social Media \n has a Positive Effect on American Democracy and \n their Satisfaction with American Democracy",
+        xlab = "Categories of Satisfaction", names = c("Not at all", "Not too Satisfied", "Somewhat", "Very         Satisfied"),
+        ylab = "Percentage of Respondents", ylim = c(0, 50),
+        col="#88c758")
+```
+
+For more specific impacts of social media, the Pew Research study considers the variables `smp_informed` and `smp_civil` good impacts of social media and `smn_manip` and `smn_divided` bad impacts of social media on democracy (see the table on page 4 for descriptions of the variables). We presume that respondents who believe social media is good for democracy will more likely believe that social media has "more of an impact" (coded as a 1 in our quantitative variable) on the "good" variables and less of an impact or no impact (2 or 3) on the "bad" variables. The opposite might be true for respondents believing social media has an overall bad impact on democracy. 
+
+```{r, results='asis', echo=FALSE, fig.show='hold', out.width='50%'}
+mean_GOOD_impacts <- data.frame(
+  Impact = c("smp_civil","smp_informed","smn_manip","smn_divided"),
+  Mean = c(
+    mean(G$smp_civil, na.rm=TRUE),
+    mean(G$smp_informed,na.rm=TRUE),
+    mean(G$smn_manip,na.rm=TRUE),
+    mean(G$smn_divided,na.rm=TRUE)
+  )
+)
+
+stargazer(mean_GOOD_impacts, # input the object "as.data.frame" for descriptives
+          summary=FALSE,
+          type="latex",
+          rownames=FALSE,
+          header = FALSE,
+          title = "Social Media's Specific Impacts for Respondents Believing Social Media is Good for Democracy",
+          digits = 2,table.placement = "H")
+
+mean_BAD_impacts <- data.frame(
+  Impact = c("smp_civil","smp_informed","smn_manip","smn_divided"),
+  Mean = c(
+    mean(B$smp_civil, na.rm=TRUE),
+    mean(B$smp_informed,na.rm=TRUE),
+    mean(B$smn_manip,na.rm=TRUE),
+    mean(B$smn_divided,na.rm=TRUE)
+  )
+)
+
+stargazer(mean_BAD_impacts, # input the object "as.data.frame" for descriptives
+          summary=FALSE,
+          type="latex",
+          rownames=FALSE,
+          header = FALSE,
+          title = "Social Media's Specific Impacts for Respondents Believing Social Media is Bad for Democracy",
+          digits = 2,table.placement = "H")
+
+```
+
+According to the values in the table, respondents believing social media is good for democracy think social media's ability to manipulate is the strongest impact and much less of an impact on informing people on current events going on in the country. We do, however, see a slight difference for respondents who believe social media is bad for democracy - the means for the "good" impacts (`smp_civil` and `smp_informed`) are visibly greater than the means for the "bad" impacts, supporting the idea that those who believe social media is bad for democracy think social media's "bad" abilities to manipulate and divide is stronger than its "good" abilities to inform and promote civil discourse. In general, the means for all four variables are somewhat similar, suggesting that respondents' belief in whether social media is overall good or bad for democracy is not largely based on the defined "good" and "bad" specific impacts. (*See Tables 9 and 10*)
+
+We are also interested in observing possible differences in satisfaction and belief that social media is good or bad for democracy by race, political ideology, age category, and whether the respondents post social and political issues on social media.
+
+The mean satisfaction by race for respondents believing social media is good for democracy are overall similar (mostly not too satisfied or only somewhat satisfied with U.S. democracy) and slightly higher than the satisfaction of respondents believing social media is bad. Those who are mixed race and believe social media is bad for democracy have the lowest satisfaction (mean of 1.98) with U.S. democracy.
+
+```{r, echo=FALSE, error=FALSE, warning=FALSE, results='asis'}
+B_noNA <- na.omit(subset(socDem, socDem$social_demo == 0))
+G_noNA <- na.omit(subset(socDem, socDem$social_demo == 1))
+
+options(xtable.comment = FALSE)
+
+#ATEs for race
+race.good <- G_noNA %>%
+  group_by(F_RACECMB) %>%
+  summarise_at(vars(satisfied),
+               list(mean_satisfied = mean))
+
+names(race.good) <- c("Race", "Mean Satisfaction")
+print(xtable(race.good, caption="Respondents Believing Social Media is Good
+             and Mean Satisfaction by Race"), include.rownames=FALSE, caption.placement = 'top', type='latex')
+
+race.bad <- B_noNA %>%
+  group_by(F_RACECMB) %>%
+  summarise_at(vars(satisfied),
+               list(mean_satisfied = mean))
+
+names(race.bad) <- c("Race", "Mean Satisfaction")
+print(xtable(race.bad, caption="Respondents Believing Social Media is Bad
+             and Mean Satisfaction by Race"), include.rownames=FALSE, caption.placement = 'top', type='latex')
+```
+
+```{r, echo=FALSE, error=FALSE, warning=FALSE, results='asis'}
+#ATEs of ideology
+ideology.good <- G_noNA %>%
+  group_by(ideology) %>%
+  summarise_at(vars(satisfied),
+               list(mean_satisfied = mean))
+
+names(ideology.good) <- c("Ideology", "Mean Satisfaction")
+print(xtable(ideology.good, caption="Respondents Believing Social Media is Good
+             and Mean Satisfaction by Ideology"), 
+      include.rownames=FALSE, caption.placement = 'top', type='latex')
+
+ideology.bad <- B_noNA %>%
+  group_by(ideology) %>%
+  summarise_at(vars(satisfied),
+               list(mean_satisfied = mean))
+
+names(ideology.bad) <- c("Ideology", "Mean Satisfaction")
+print(xtable(ideology.bad, caption="Respondents Believing Social Media is Bad
+             and Mean Satisfaction by Ideology"), 
+      include.rownames=FALSE, caption.placement = 'top', type='latex')
+```
+```{r, echo=FALSE, error=FALSE, warning=FALSE, results='asis'}
+#ATEs for age
+age.good <- G_noNA %>%
+  group_by(F_AGECAT) %>%
+  summarise_at(vars(satisfied),
+               list(mean_satisfied = mean))
+
+names(age.good) <- c("Age Category", "Mean Satisfaction")
+print(xtable(age.good, caption="Respondents Believing Social Media is Good
+             and Mean Satisfaction by Age Category"), 
+      include.rownames=FALSE, caption.placement = 'top', type='latex')
+
+age.bad <- B_noNA %>%
+  group_by(F_AGECAT) %>%
+  summarise_at(vars(satisfied),
+               list(mean_satisfied = mean))
+
+names(age.bad) <- c("Age Category", "Mean Satisfaction")
+print(xtable(age.bad, caption="Respondents Believing Social Media is Bad
+             and Mean Satisfaction by Age Category"), 
+      include.rownames=FALSE, caption.placement = 'top', type='latex')
+
+```
+
+```{r, echo=FALSE, error=FALSE, warning=FALSE, results='asis'}
+#ATEs for Posting
+posting.good <- G_noNA %>%
+  group_by(POST_ISSUES_W105) %>%
+  summarise_at(vars(satisfied),
+               list(mean_satisfied = mean))
+
+names(posting.good) <- c("Frequency of Posting",
+                         "Mean Satisfaction")
+print(xtable(posting.good, caption="Respondents Believing Social Media is Good
+             and Mean Satisfaction by How Often They Post Issues"), 
+      include.rownames=FALSE, caption.placement = 'top', type='latex')
+
+posting.bad <- B_noNA %>%
+  group_by(POST_ISSUES_W105) %>%
+  summarise_at(vars(satisfied),
+               list(mean_satisfied = mean))
+
+names(posting.bad) <- c("Frequency of Posting",
+                    "Mean Satisfaction")
+print(xtable(posting.bad, caption="Respondents Believing Social Media is Bad
+             and Mean Satisfaction by How Often They Post Issues"), 
+      include.rownames=FALSE, caption.placement = 'top', type='latex')
+```
+
+
+# Statistical Analysis
+
+## Linear Regression Analysis
+
+We will run a linear regression analysis of believing whether social media is good or bad for democracy on satisfaction with U.S. democracy.
+
+For our first model, we do not include race, ideology, or other variables in the regression. The p-value for this model is well below the 5% threshold, so the null hypothesis can be rejected and the belief of social media's impact on democracy does have an effect on satisfaction with democracy. The $beta_1$ coefficient in the model (0.3245) suggests a positive correlation between our two variables, meaning those who believe social media has more of a good effect on democracy have slightly higher satisfaction ratings of U.S. democracy.
+
+```{r, echo=FALSE, error=FALSE, warning=FALSE, results='asis'}
+m1 <- lm(satisfied ~ social_demo, data = usesm_socDem)
+m2 <- lm(satisfied ~ factor(social_demo) + factor(race), data = usesm_socDem)
+m3 <- lm(satisfied ~ factor(social_demo) + factor(race) + factor(agecat), data = usesm_socDem)
+m4 <- lm(satisfied ~ factor(social_demo) + factor(race) + factor(agecat) + factor(ideology) + factor(posting), data = usesm_socDem)
+m5 <- lm(satisfied ~ factor(social_demo) + factor(race) + factor(agecat) + factor(ideology) + factor(smp_informed) + factor(smp_civil) + factor(smn_divided) + factor(smn_manip), data = usesm_socDem)
+#summary(m1)
+
+print(xtable(summary(m1), caption = 'Model 1'), caption.placement = 'top',type='latex')
+
+
+```
+
+We then add in the other factors, beginning with race, then followed by age category, ideology, and how often the respondent posts social or political issues on social media.
+
+Adding race:
+
+```{r, echo=FALSE, error=FALSE, warning=FALSE, results='asis'}
+print(xtable(summary(m2), caption = 'Model 2'), caption.placement = 'top',type='latex')
+```
+
+Race, Ideology, and Age Category:
+
+```{r, echo=FALSE, error=FALSE, warning=FALSE,  results='asis'}
+print(xtable(summary(m3), caption = 'Model 3'), caption.placement = 'top',type='latex')
+```
+
+Race, Ideology, Age Category, and Posting:
+
+```{r, echo=FALSE, error=FALSE, warning=FALSE, results='asis'}
+print(xtable(summary(m4), caption = 'Model 4'), caption.placement = 'top',type='latex')
+```
+
+
+## Results Discussion
+
+
+# Conclusion
+
+
+# Citations and Relevant Literature
+
+Dixon, Stacy Jo. Social Media Usage in the United States - Statistics & Facts, Statista, 18 Dec. 2023, 
+https://www.statista.com/topics/3196/social-media-usage-in-the-united-states/#topicOverview. 
+
+Wike, Richard, et al. “Social Media Seen as Mostly Good for Democracy across Many Nations, but U.S. Is 
+a Major Outlier.” Pew Research Center’s Global Attitudes Project, Pew Research Center, 6 Dec. 2022, https://www.pewresearch.org/global/2022/12/06/social-media-seen-as-mostly-good-for-democracy-across-many-nations-but-u-s-is-a-major-outlier/. 
+ 
+## Dataset
+American Trends Panel Wave 105
+https://www.pewresearch.org/global/dataset/american-trends-panel-wave-105/ 
+
+
+
+
+
+

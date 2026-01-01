@@ -1,0 +1,64 @@
+---
+title: "linear regression + graphs"
+author: "Naomi Le Mouel"
+date: "2024-03-13"
+output: html_document
+---
+```{r}
+
+library(data.table)
+#subset data so all respondents use social media
+usesm_socDem <- subset(dat_socDem, dat_socDem$socialuse > 0)
+
+all <- as.data.table(dat_socDem$satisfied, useNA = 'always')
+sm_use <- as.data.table(usesm_socDem$satisfied, useNA = 'always')
+
+#tables
+table_all <- all[, .(Percentage = .N / nrow(all) * 100), by = dat_socDem$satisfied]
+table_all
+
+table_sm <- sm_use[, .(Percentage = .N / nrow(sm_use) * 100), by = usesm_socDem$satisfied]
+table_sm
+
+#Subset data by GOOD or BAD
+B <- subset(dat_socDem, dat_socDem$social_demo == 0)
+G <- subset(dat_socDem, dat_socDem$social_demo == 1)
+
+BAD <- as.data.table(B$satisfied, useNA = 'always')
+GOOD <- as.data.table(G$satisfied, useNA = 'always')
+
+#tables
+table_BAD <- BAD[, .(Percentage = .N / nrow(BAD) * 100), by = B$satisfied]
+table_BAD
+
+table_GOOD <- GOOD[, .(Percentage = .N / nrow(GOOD) * 100), by = G$satisfied]
+table_GOOD
+
+m1 <- lm(satisfied ~ factor(social_demo) + factor(race) + factor(agecat) + factor(ideology) + factor(smp_informed) + factor(smp_civil) + factor(smn_divided) + factor(smn_manip), data = usesm_socDem)
+summary(m1)
+```
+
+```{r}
+#Use vs Don't use social media
+barplot(Percentage ~ usesm_socDem, table_sm,
+        main = "Percentage of Social Media User's \n Satisfaction with American Democracy",
+        xlab = "Categories of Satisfaction", names = c("Not at all", "Not too Satisfied", "Somewhat", "Very         Satisfied"),
+        ylab = "Percentage", ylim = c(0, 50))
+
+barplot(Percentage ~ dat_socDem, table_all,
+        main = "Percentage of Non-Social Media User's \n Satisfaction with American Democracy",
+        xlab = "Categories of Satisfaction", names = c("Not at all", "Not too Satisfied", "Somewhat", "Very         Satisfied"),
+        ylab = "Percentage", ylim = c(0, 50))
+
+#Thought SM was Good vs Bad for US democracy
+barplot(Percentage ~ B, table_BAD,
+        main = "Percentage of Respondents who Think Social Media \n has a Negative Affect on American Democracy and \n their Satisfaction with American Democracy",
+        xlab = "Categories of Satisfaction", names = c("Not at all", "Not too Satisfied", "Somewhat", "Very         Satisfied"),
+        ylab = "Percentage", ylim = c(0, 50))
+
+barplot(Percentage ~ G, table_GOOD,
+        main = "Percentage of Respondents who Think Social Media \n has a Possitive Affect on American Democracy and \n their Satisfaction with American Democracy",
+        xlab = "Categories of Satisfaction", names = c("Not at all", "Not too Satisfied", "Somewhat", "Very         Satisfied"),
+        ylab = "Percentage", ylim = c(0, 50))
+```
+

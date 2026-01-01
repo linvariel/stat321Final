@@ -1,0 +1,28 @@
+---
+title: "ConvertDemoDatatoCSV"
+author: "Ariel Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Convert .sav file to .csv or xlxs
+```{r}
+library(foreign)
+getwd()
+```
+```{r}
+# make sure the dataset is located in your working directory
+
+dfdemo = read.spss("W105_Mar22/W105_Mar22/ATP W105.sav")
+```
+```{r}
+install.packages("xlsx")
+library(xlsx)
+write.xlsx(dfdemo, 'convertedDemo.xlsx')
+
+```
+
