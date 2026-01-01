@@ -1,0 +1,214 @@
+---
+title: "W3 lab - data frames, logical relations, and subsetting"
+author: "Ariel Lin"
+date: \today
+output:
+  pdf_document:
+    latex_engine: pdflatex
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# This code chunk will not be printed in the PDF file as we set include = FALSE.
+
+rm(list = ls()) # clean memory from the global environment
+
+
+```
+
+
+**Prerequisite**: *This will be a basic exercise on some of the concepts covered so far. This time, We will create the data ourselves. Nevertheless, you may need to load the package* `tidyverse` *or* `dplyr` *if you want to use the function* `filter()` *for subsetting data.*
+
+```{r}
+# Load any necessary libraries for this project here.
+
+# If you have not installed the package tidyverse yet, then use the code below to install
+# You will have to remove the hashtag - which is currently telling R, that this is not to be evaluated as code
+
+# install.packages("tidyverse")
+
+# After installing, you can load the package with the function library()
+
+library(tidyverse)
+
+```
+
+
+
+# 1: Creating a data frame.
+
+You are working for a company that specializes in educational technology. The company is developing a new platform for schools to track student performance. The platform requires a data frame that contains student names, ages, genders, and scores. Your task is to **create** this data frame for a small group of students in the pilot program.
+
+The students are Alice, Bob, Charlie, Dave, Eve, and Marta. Alice is 20 years old, Bob is 30 years old, Charlie is 25 years old, Dave is 28 years old, Eve is 22 years old, and Marta is 21 years old. Alice, Eve, and Marta are female, while Bob, Charlie, and Dave are male. Finally, Alice scored 80 on her last test, Bob scored 90, Charlie scored 75, Dave scored 85, Eve scored 95 and Marta missed the exam. 
+
+
+To create the data frame, you will need to use the `data.frame()` function and assign the appropriate values to the **name**, **age**, **gender**, and **score** columns.
+
+
+```{r}
+
+# Create data frame - this should get you started
+
+df <- data.frame(
+  name = c("Alice","Bob","Charlie","Dave","Eve","Marta"),
+  age = c(20,30,25,28,22,21),
+  gender = c("female","male","male","male","female","female"),
+  score = c(80,90,75,85,95,NA) # NA is missing value
+)
+
+
+```
+
+
+
+# 2: Exploratory analysis via cross-tabulation
+
+## 2.1: Create a new column with qualitative score values.
+
+Create a new column in the data frame called **pass_fail** that indicates whether each student *passed* or *failed* the exam. A student passes if their score is 80 or higher, and fails if their score is below 80.
+
+
+```{r}
+# Create new column pass_fail
+
+# What if we need to scale it up? Use LOGIC. if score >= 80, pass; if score < 80 then fail.
+# adding a new column. If df$score >= then pass, else fail.
+df$pass_fail <- ifelse(df$score >= 80,"pass","fail")
+# view(df)
+
+
+
+```
+
+
+## 2.2 Cross-tabulation of qualitative variables.
+
+Use the `table()` function to count the number of students who passed and failed the exam. How many students/cases are in the pass and fail categories?
+
+```{r}
+# Use table() to count pass and fail
+table(df$pass_fail)
+
+
+```
+
+Next, cross-tabulate the **pass_fail** variable with the gender variable using the `table()` function again. How many male and female students have passed and/or failed?
+
+```{r}
+# Use table() to count pass and fail by gender
+table(df$pass_fail, df$gender)
+
+
+
+```
+
+
+# 3: Estimating gender differences on exam scores
+
+
+## 3.1: Filter/subset rows based on a logical condition. 
+
+
+Filter or subset the data frame based on the **gender** variable, creating two new objects named `female_df` and `male_df` containing the filtered data. You can either use the function `subset()` from base \texttt{R} or `filter()` from `dplyr` / `tidyverse` package.
+
+
+```{r}
+# Filter/subset rows based on gender
+female_df <- subset(df, gender == "female")
+male_df <- subset(df, gender == "male")
+
+```
+
+
+
+## 3.2: Summary statistics by gender. 
+
+Please use the relevant functions such as `mean()` or `sd()` to calculate the (i) mean, (ii) standard deviation, (iii) minimum, and (iv) maximum scores for the subsetted data frames. You should end up with four different objects, each containing the dispersion statistics for each subsetted data frame (a total of 8 objects). Avoid using the function `summary()` - it gives you the same information, but in this application, we want to continue working with these individual pieces of information - hence we want to create separate objects.
+
+
+```{r}
+# Calculate summary statistics for the male df:
+summary(male_df)
+mean_m <- mean(male_df)  # Uncomment the code
+sd_m <- sd(male_df)
+
+
+# Calculate summary statistics for the female df:
+summary(female_df)
+
+```
+
+
+
+
+## 3.3: Summarize the results in a new data frame. 
+
+Let's create a new data frame object that includes the dispersion statistics of the scores by gender. We will call this new data frame *summary_gender*, which will consist of five different vectors: (i) gender, (ii) mean, (iii) sd, (iv) max, and (v) min.
+
+Notice that each vector within this new data frame will have a *length* of two values, which we previously created. Thus, we need to concatenate the objects from the previous exercise accordingly in their respective new vectors. For the gender vector, we will concatenate two `character` values/observations with the gender type. When appropriate, we will use the `round()` function to round the numerical digits to at most two decimals.
+
+Once you have created the object *summary_gender*, when printing it in the console you should end up with the below table:
+
+
+| gender | mean  | sd   | max | min |
+|--------|-------|------|-----|-----|
+| M      | 72.33 | 9.29 | 80  | 62  |
+| F      | 90.00 | 7.07 | 95  | 85  |
+
+
+```{r}
+
+# round digits
+
+#This should get you started: mean_m <- round(mean_m,digits = 2)
+
+
+
+# create a df called "summary_gender" - fill in the suggestion below
+
+summary_gender <- 
+  data.frame(
+    gender = c(),
+    mean = c(),
+    sd = c(),
+    max = c(),
+    min = c()
+  )
+
+
+# print the newly created object
+
+
+```
+
+
+## 3.4: difference in means
+
+We want to estimate the difference in exam scores between male and female students, which can be written as $Y = \bar{X}_{\text{female}} - \bar{X}_{\text{male}}$. Here, $\bar{X}$ represents the mean score for either female or male students, and $Y$ is the difference in means.
+
+
+To estimate $Y$, we can use the object *summary_gender* created in the previous exercise to extract the mean values for each gender and take their difference. Calculate $Y$ in one line of code manipulating the rows and column elements of *summary_gender*. 
+
+
+What is the estimated difference in means, $Y$? Can we say that the treatment gender have a *causal effect* on the exam scores? Provide a short text no longer than one paragraph explaining why or why not the quantity $Y$ identifies a casual effect. 
+
+
+
+```{r}
+# calculate difference in means
+
+
+```
+
+
+*.. answer the question on causality here ...*
+
+
+
+
+
+

@@ -1,0 +1,150 @@
+---
+title: "CSSS 321: Code from Class 9.2"
+subtitle: "In-Class Demo with Broockman and Kalla (2016)"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading and Exploring the Data Frame
+
+```{r}
+dat <- read.csv("broockman_kalla_2016_w9.csv")
+nrow(dat)
+```
+There are 68,378 observations in the original dataset. If we're interested in examining how treatment *changes* individual attitudes, we can look for a change only in those respondents who completed the *baseline* survey: `therm_trans_t0`.  
+
+## Dealing with Non-Compliance (Non-Response) in Baseline Survey
+
+Let's check for the rate of missingness across all of the variables, and then specifically check whether we have missingness on that baseline survey `therm_trans_t0`...
+
+```{r}
+dat_na <- ifelse(is.na(dat), 1, 0)
+colMeans(dat_na)
+```
+
+We can see that 97% of our sample did not respond to the baseline survey!  Let's subset our data looking at only those who have a valid (non-NA) answer for `therm_trans_t0`, which was collected in the pre-treatment baseline study. 
+
+```{r}
+dat <- subset(dat, !is.na(therm_trans_t0))
+nrow(dat)
+table(dat$treat_ind)
+```
+
+Of the 68,378 in the original dataset, 1825 responded to the baseline survey. In this sample, we are left with 913 assigned to the control group and 912 assigned to the treatment group. 
+
+## Using Placebo Test to Check Randomization
+
+In some cases, noncompliance may affect randomization.  We want to make sure that the average level of support (our outcome) is not meaningfully different between the treatment and the control groups *before* the treatment was administered (during the baseline survey). To do this, we will conduct a t-test on support before treatment was administered ($t=0$) between the treatment and control groups among the subset of respondents identified above (`dat`).  
+
+Let our null-hypothesis be that there no difference between the two groups.
+
+```{r}
+# treatment at t0
+treat <- dat$therm_trans_t0[dat$treat_ind==1]
+
+# control at t0
+control <- dat$therm_trans_t0[dat$treat_ind==0]
+
+#difference in means
+mean(treat) - mean(control)
+
+t.test(treat, control, na.action = na.omit)
+```
+
+The estimated difference between the treatment and control groups is 0.66.  The confidence interval around this estimate -- [-2.02, 3.35] -- includes 0 so we cannot reject the null hypothesis that the groups have the same attitudes.  We can draw a similar conclusion that we retain the null hypothesis by looking at the p-value of 0.63 (>.05). *This is what we would expect to find because participants were randomly assigned to the treatment and control groups.*
+
+## Estimating Treatment Effects and Examining the Duration of the Effects 
+
+Let’s see if the attitudes in the treatment and placebo changed after the treatment was administered and for how long these differences lasted.  For each wave ($t=1, 2, 3, \text{and} 4$), perform a difference-in-means calculation testing the null-hypothesis that no difference between the two groups exists.  
+
+```{r}
+t.test(dat$therm_trans_t1[dat$treat_ind==1], dat$therm_trans_t1[dat$treat_ind==0],
+       na.action = na.omit)
+```
+
+In the first wave immediately after treatment, we see a jump in feeling thermometer scores of 6.76. With a p-value of 0.004, we reject the null that no difference exists between treatment and control groups. 
+
+Turning to the second wave follow-up survey:
+
+```{r}
+t.test(dat$therm_trans_t2[dat$treat_ind==1], dat$therm_trans_t2[dat$treat_ind==0],
+       na.action = na.omit)
+```
+
+Here, the treatment effect diminishes a bit (4.49) and is no longer statistically significant (p = 0.058 > 0.05).  However, in our third wave...
+
+```{r}
+t.test(dat$therm_trans_t3[dat$treat_ind==1], dat$therm_trans_t3[dat$treat_ind==0],
+       na.action = na.omit)
+```
+
+...the difference of 6.23 is statistically significant (p = 0.007 < 0.05) and we can again reject the null-hypothesis.  In our fourth and final wave...
+
+```{r}
+t.test(dat$therm_trans_t4[dat$treat_ind==1], dat$therm_trans_t4[dat$treat_ind==0],
+       na.action = na.omit)
+```
+
+...the difference in means is 5.30, but it again just misses conventional levels of statistical significance (p=0.058 > 0.05).
+
+## Bivariate Regression Analysis
+
+Broockman and Kalla (2016) use a regression framework to estimate the average treatment effect.  Let's start by regressing the feeling thermometer dependent variable measured at time $t=3$ (`therm_trans_t3`) on treatment assignment (`treat_ind`).
+
+```{r}
+bmod.ate3 <- lm(therm_trans_t3 ~ treat_ind,
+                data = dat)
+summary(bmod.ate3)
+```
+
+This means that our estimated treatment effect is an increase of 6.23 points on the feeling thermometer scale six weeks after treatment. Our p-value on this coefficient is well below 0.05, so we can reject the null hypothesis and statistical significance holds. 
+
+## Multivariable Regression Analysis
+
+To further alleviate concerns of imbalances between treatment and control groups, adjust for an individual’s feeling thermometer scores at time $t=0$, her age (`vf_age`), race (`vf_racename`), gender (`vf_female`), and political party (`vf_democrat`).
+
+```{r}
+mmod.ate3 <- lm(therm_trans_t3 ~ treat_ind + 
+                  therm_trans_t0 + vf_age + vf_racename + vf_female + vf_democrat, 
+                data = dat)
+
+summary(mmod.ate3)
+```
+
+This means that our estimated treatment effect is an increase of 4.38 points on the feeling thermometer scale six weeks after treatment. Our p-value on this coefficient is still well below 0.05, so we can reject the null hypothesis and statistical significance holds. 
+
+
+## Regression Analysis with Canvasser Fixed Effects
+
+To account for possible differences between the more than 50 canvassers, we can include in the model a fixed effect (i.e., dummy variable) for each canvasser (`canvasser_id`).  
+
+```{r}
+mmodfe.ate3 <- lm(therm_trans_t3 ~ treat_ind + 
+                    therm_trans_t0 + vf_age + vf_racename + vf_female + vf_democrat + 
+                    factor(canvasser_id), 
+                  data = dat)
+
+summary(mmodfe.ate3)
+```
+
+With canvasser fixed effects, we find an estimated treatment effect is an increase of 5.73 points on the feeling thermometer scale six weeks after treatment. Our p-value on this coefficient is still well below 0.05, so we can reject the null hypothesis and statistical significance holds. 
+
+## Checking for the Durability of the Effect into Wave 4
+
+Finally, let's conduct the same regression analysis with canvasser fixed effects for surveys three months after treatment (`therm_trans_t4`) and compare the effects and statistical significance.
+
+```{r}
+mmodfe.ate4 <- lm(therm_trans_t4 ~ treat_ind + 
+                    therm_trans_t0 + vf_age + vf_racename + vf_female + vf_democrat + 
+                    factor(canvasser_id), 
+                  data = dat)
+
+summary(mmodfe.ate4)
+```
+
+While the treatment effect remains quite large (4.51 points), it (barely) loses its statistical significance at the .05-level. 

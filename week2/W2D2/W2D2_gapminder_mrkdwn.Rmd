@@ -1,0 +1,158 @@
+---
+title: "W2D2_gapminder"
+author: "Ariel Lin"
+date: \today
+output: pdf_document
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE} 
+#include=FALSE tells R not to include when knitting
+knitr::opts_chunk$set(echo = TRUE)
+
+rm(list = ls()) # clean memory from the global environment
+```
+
+## Prerequisite
+
+Please install the following package if you haven't by un-commenting out the first line (`install.packages(...)`). The keyboard shortcut to comment out a line is `Ctrl` + `Shift` + `C`, or for macOS, `Command` + `Shift` + `C`
+
+```{r}
+# install.packages("tidyverse") ## You just have to run it once
+install.packages("tidyverse") ## You just have to run it once
+library(tidyverse)
+library(dplyr)              ## load the dplyr package
+```
+
+## Load the data 
+
+Load the gapminder data using `read.csv()`. Make sure that the file is in the right directory.
+```{r}
+setwd('/Users/Harry/Documents/Ariel/~College/~first year/WIN 24/STAT 321/W2D2')
+getwd()
+read.csv("gapminder.csv")
+# getwd()
+
+
+```
+
+## Inspect the data
+
+Please find out: 
+  1) The class of the `data` object
+  2) Snippet of the top and bottom rows
+  3) Its numbers of rows and columns
+  4) The names of columns/variables
+  5) Summary of all columns/variables
+  6) Mean and standard deviation of the `gdpPercap` variable: 
+
+```{r}
+data<-read.csv('gapminder.csv')
+
+# 1 find the class of the data object
+class(data) #data.frame
+
+# 2 Snippet of the top and bottom rows
+data[1,] #top row
+head(data) #shows first 6 rows
+# nrow(data)
+data[1704, ] #bottom row
+tail(data) #shows last bottom 6 rows
+
+# 3 number of rows and columns - rows are always mentioned first
+dim(data)
+nrow(data)
+ncol(data)
+
+# 4 names of columns/variables
+colnames(data)
+names(data)
+
+# 5 summary of all columns/variables
+summary(data)
+
+# 6 Mean and standard deviation of gdpPercap variable
+mean(data$gdpPercap)
+sd(data$gdpPercap)
+
+```
+
+When did the data start and end? 
+```{r}
+# ask what this question is asking for, are we asking for years?
+data$year[1]
+data$year[1704]
+```
+
+How many unique countries there are in the data?
+```{r}
+length(unique(data$country))
+# there are 142 unique countries in the data
+```
+
+## Subset the data
+
+Subset the data for `Afghanistan` since 1980. 
+
+```{r}
+subset(data, (country == "Afghanistan" & year>=1980))
+```
+
+
+## Transformation
+
+Create the following new columns/variables: 
+  1. Create `gdpTotal` by multiplying `gdpPercap` and `pop`
+  2. Create `gdpMil` that transform `gdpTotal` in millions, and round it up to one decimal place
+  3. Create `gdpMil.prev` that records the `gdpMil` of the previous year (with the help of `lag()`)
+  4. Create `gdpChange` that computes the change in `gdpMil` (presented in percentage point and round up to one decimal place)
+  5. Plot `gdpChange` over year for Afghanistan
+```{r}
+# 1
+gdpTotal<-c(data$gdpPercap * data$pop)
+# gdpTotal
+gdpMil<-round(gdpTotal/(10^6), digits=1) #????????????????????????
+# gdpMil.prev
+gdpMil.prev<-lag(gdpMil)
+
+```
+
+
+
+## Plot the data
+
+Plot the following variables using the `plot()` function: 
+  1. Plot life expectancy over time for Afghanistan data
+  2. Plot gdp per capita over time
+  3. Plot life expectancy against gdp per capita
+
+If you don't know what `plot()` function is doing, run `?plot` to access the help page 
+```{r}
+# ?plot
+dataAfghanistan<-subset(data, (country == "Afghanistan"))
+# summary(dataAfghanistan)
+plot(dataAfghanistan$lifeExp, dataAfghanistan$year, xlab="Life Expectancy", ylab="Year")
+title(main="Life Expectancy Over Time for Afghanistan")
+#
+plot(dataAfghanistan$gdpPercap, dataAfghanistan$year, xlab="GDP per Capita", ylab="Year")
+title(main="GDP per Capita Over Tie for Afghanistan")
+```
+
+
+## Sorting
+
+Find out:
+  1. the top 10 country-year observations with highest `gdpPercap`
+  2. the bottom 10 country-year observations with lowest `gdpPercap`
+
+```{r}
+head(data$gdpPercap)
+summary(data$gdpPercap)
+```
+
+
+
+
+

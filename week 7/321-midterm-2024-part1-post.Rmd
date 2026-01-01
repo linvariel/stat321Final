@@ -1,0 +1,178 @@
+---
+title: "CSSS/SOC/STAT 321: Midterm Exam, Part I"
+subtitle: "Due: February 15, 2024, at 8:30am"
+author: "Ariel Lin"
+output: 
+  pdf_document: default
+  html_document: default
+---
+
+The following portion of your midterm exam is worth 15 points towards your final grade. Your answers should be submitted on Canvas as a knitted PDF by Thursday, February 15, 2024, at 8:30am.  You must write any written, non-code responses (i.e., interpretations) in the main text and not in R code chunks.  You should check your PDF carefully before uploading to ensure written answers, code, and plots are visible and accurately reflect your final answers. 
+
+This first part of your midterm exam is open-book, open-note, and open-internet.  However, you should not communicate with other humans about the exam. Complete the assignment on your own.  You are forbidden from exchanging texts/emails/chats/DMs etc. about the exam; sharing notes about the exam or the course; posting material on the internet about the exam; asking for help with a question on the exam from online forums; requesting that someone produce materials that could be helpful for the exam. If you are uncertain about whether a resource is permissible, please do not hesitate to contact me directly (cainsley@uw.edu).
+
+## Background
+
+The empirical exercise builds on the following paper which revisits the results of a famous natural experiment in the social sciences:
+
+  Green, Donald P., Tiffancy C. Davenport, and Kolby Hanson (2019). 
+  "[Are There Long-Term Effects of the Vietnam Draft on Political Attitudes or Behavior? Apparently Not.](https://doi.org/10.1017/XPS.2018.18)" *Journal of Experimental Political Science.* 6(2), 71-80.
+  
+This paper delves into the implications of the Vietnam draft lottery on the political attitudes and conduct of men who were eligible for the draft during the years 1969 through 1971. By way of a lottery system based on birth dates, the draft randomly chose men to serve in the US army who turned 19 prior to 1969, 1970, or 1971. Although not all of those selected ultimately served, the authors of this study make use of a survey and publicly accessible information -- including voter registration, voting history, and partisan affiliation of eligible candidates -- to understand whether being assigned to the draft has any enduring political effects.
+
+The data set `draft-midterm24.csv` draws on surveys of these Vietnam draft-eligible men conducted between 2014 and 2016 by Green, Davenport, and Hanson (2019).
+
+---------------------------------------------------------------------------------------------------------
+Name                 Description
+-------------------- -------------------------------------------------------------------------------------
+`draft`                Whether a respondent was drafted (`1`) or not (`0`)  
+
+`birth.year`           Birth year 
+
+`ideology`             Ideology score that takes values from 1 to 5 where 1 is  "very conservative," 3 is "moderate," and 5 is "very liberal."
+
+`state`                Respondent's living state
+
+---------------------------------------------------------------------------------------------------------
+```{r}
+rm(list = ls()) # clean memory
+library(tidyverse)
+library(tinytex)
+library(dplyr)
+library(ggplot2)
+```
+```{r}
+#importing data
+draftDatraw <- read.csv("draft-midterm24.csv")
+
+#check for missing values
+table(is.na(draftDatraw))
+
+#data without NA values
+draftDat <- na.omit(draftDatraw)
+```
+```{r}
+sum(is.na(draftDatraw$state))
+sum(is.na(draftDatraw$ideology))
+sum(is.na(draftDatraw$birth.year))
+sum(is.na(draftDatraw$draft))
+```
+```{r}
+summary(draftDatraw)
+```
+
+
+## Question 1 (2 points)
+Create a barplot of the ideology variable with the heights corresponding to counts in each category. Format this plot nicely with axis labels and informative labels for each bar the on barplot, taking care to abbreviate the ideology category labels to have them all fit on the plot.  
+```{r}
+
+barplot(table(draftDat$ideology), 
+        ylim=c(0,250), 
+        ylab="Number of Respondents", 
+        xlab="Ideology", 
+        names.arg=c("Very Cons.","Cons.","Mod.","Lib.","Very Lib."), 
+        col = "#8A9A5B")
+```
+
+## Question 2 (3 points)
+Create a new binary variable, `liberal`, that is 1 if a respondent says they are liberal or very liberal, and 0 otherwise. Use this variable to calculate the sample proportion of respondents that are liberal by the year that respondents were born in.  In 1-2 sentences, briefly interpret these proportions.
+```{r}
+#Creating a new binary variable
+draftDat$liberal <- 
+  ifelse(draftDat$ideology == 5|draftDat$ideology==4, 1, 0)
+```
+Notes: Values 5 and 4 are considered liberal.
+
+Sample proportion of respondents that are liberal by year respondents were born in
+```{r}
+# year 1950
+yr_1950 <- subset(draftDat, draftDat$birth.year==1950)
+#sum(is.na(yr_1950)) (NAs in draftDatraw not significant, 6, 4, 5)
+mean(yr_1950$liberal)
+```
+Notes: around 32% of respondents born in 1950 are either liberal or very liberal.
+
+```{r}
+# year 1951
+yr_1951 <- subset(draftDat, draftDat$birth.year==1951)
+#sum(is.na(yr_1951))
+mean(yr_1951$liberal)
+```
+Notes: around 29% of respondents born in 1951 are either liberal or very liberal.
+
+```{r}
+# year 1952
+yr_1952 <- subset(draftDat, draftDat$birth.year==1952)
+#sum(is.na(yr_1952))
+mean(yr_1952$liberal)
+```
+Notes: around 36% of respondents born in 1952 are either liberal or very liberal. This percentage is slightly higher than the previous years 1950 and 1951. In general for all three years, there are about a third of respondents who are liberal.
+
+## Question 3 (5 points)
+Events at an early stage of life - like being drafted - can have a long-lasting impact on a person's political perspectives. To examine whether this is true in this setting, estimate the sample average treatment effect of being drafted (`draft`) on ideology (`liberal`). Report your estimate and provide an interpretation of this result. 
+```{r}
+# Sample ATE
+# Check for missingness creating a difference
+draftedraw <- subset(draftDatraw, draftDatraw$draft == 1)
+table(is.na(draftedraw))
+
+notDraftedraw <- subset(draftDatraw, draftDatraw$draft != 1)
+table(is.na(notDraftedraw))
+```
+Notes: There does not seem to be a very significant difference caused by missing-ness.
+
+```{r}
+# Change in ideology
+# drafted
+drafted <- subset(draftDat, draftDat$draft == 1)
+mean(drafted$liberal)
+
+notDrafted <- subset(draftDat, draftDat$draft != 1)
+mean(notDrafted$liberal)
+
+mean(drafted$liberal) - mean(notDrafted$liberal)
+```
+Notes: The average proportion of respondents whose ideology is liberal for those who were drafted and those who were not drafted are very similar (both around a third). 
+Not drafted respondents have a slightly higher proportion of people who are liberal (about 1%). 
+The difference between drafted and not drafted respondents seems to be very small, so the condition of being drafted or not drafted does not seem to have a significant effect on liberal political attitudes.
+
+## Question 4 (5 points)
+Even if we assign the same treatment, respondents' characteristics can result in different effects. In this question, let's focus on the potential for geographic heterogeneity given we have survey data from respondents residing in both Colorado and Oregon (`state`).  Estimate the sample average treatment effect of being drafted on identifying as liberal in the survey **by respondents' state of residence**.  Briefly interpret your results. 
+```{r}
+#Check for missingness
+coloradoraw <- subset(draftDatraw, draftDatraw$state == "CO")
+oregonraw <- subset(draftDatraw, draftDatraw$state == "OR")
+
+table(is.na(coloradoraw))
+table(is.na(oregonraw))
+```
+Notes: Missingness does not seem to be a significant issue.
+
+Colorado
+```{r}
+colorado <- subset(draftDat, draftDat$state == "CO")
+col.drafted <- subset(colorado, colorado$draft == 1)
+col.notDrafted <- subset(colorado, colorado$draft != 1)
+
+mean(col.drafted$liberal)
+mean(col.notDrafted$liberal)
+col.ate <- mean(col.drafted$liberal) - mean(col.notDrafted$liberal)
+col.ate
+```
+Notes: Those in Colorado who were not drafted are around 2 percentage points more liberal than those in Colorado who were drafted, which is a small difference.
+
+Oregon
+```{r}
+oregon <- subset(draftDat, draftDat$state == "OR")
+or.drafted <- subset(oregon, oregon$draft == 1)
+or.notDrafted <- subset(oregon, oregon$draft != 1)
+
+mean(or.drafted$liberal)
+mean(or.notDrafted$liberal)
+or.ate <- mean(or.drafted$liberal) - mean(or.notDrafted$liberal)
+or.ate
+```
+Notes: The proportion of those in Oregon who were not drafted are around 0.4 percentage points more liberal than those in Oregon who were drafted. 
+Overall, there are a higher proportion of both drafted and not drafted respondents in Oregon (around 36%) who are liberal than in Colorado (around 27-28%), though the difference in average treatment effect for Oregon is smaller than for Colorado.
+
+Being drafted or not drafted does not seem to have a significant effect on political attitudes of respondents.

@@ -1,0 +1,490 @@
+---
+title: "W6D1 lab - Graphing Linear Relationships"
+author: "Student name"
+date: "2/5/2024"
+output:
+  pdf_document:
+    latex_engine: pdflatex
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, error = FALSE)
+
+rm(list = ls()) # clean memory
+```
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Today's lab
+
+1. Scatterplots 
+
+2. Linear Relationships between two variables 
+
+
+
+```{r}
+library(tidyverse)
+```
+
+
+
+## Load the gapminder data again
+
+```{r}
+gapminder <- read.csv("gapminder.csv")
+
+head(gapminder)
+```
+
+
+--> We have previously discussed various graphs and different graphing approaches
+
+--> Also, we are interested in finding causal relationships between phenomena
+
+--> If we theorize there to be a causal relationship between A and B, 
+    it is typically a good start to graphically assess whether the 
+    variables are related. 
+    
+  The main workhorse for this is the scatterplot. 
+
+  Let's say we want investigate if wealthier people live longer on average:
+
+# Scatterplotting in base r 
+
+```{r}
+# We can create a scatterplot of two continuous variables: 
+
+plot(x=gapminder$gdpPercap, y=gapminder$lifeExp)
+```
+
+# Customizations 
+
+```{r}
+plot(x=gapminder$gdpPercap, y=gapminder$lifeExp,
+     xlim=c(0, 90000) , ylim=c(20, 90), 
+     pch= 1, 
+     cex=.2, 
+     col="#69b3a2",
+     xlab="GDP Per Capita", ylab="Life Expectancy",
+     main="Base R scatterplot"
+     )
+```
+
+# What seems to be going on here? What kind of relationship is there? 
+
+# Let's manipulate some of these values and see what happens 
+
+
+
+
+
+# Scatterplots in ggplot 
+
+# Basic syntax
+
+```{r}
+gapminder %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()
+```
+
+
+# What seems to be the relationship between GDP PC and average life expectancy? 
+
+--> Some positive, not necessarily linear relationship
+
+# What is important to notice about the gdpPercap variable? 
+
+```{r}
+summary(gapminder$gdpPercap)
+```
+
+--> 
+
+```{r}
+hist(gapminder$gdpPercap)
+```
+
+# It looks like there are a lot of country-year values that are quite low, 
+# and just very few that are higher than 20k/year
+
+--> Global wealth inequality 
+
+--> The average Singaporean person in 2007 is dramatically more wealthy in real
+    monetary terms than the average Ethiopian in 1952. 
+    
+# Let's identify the smallest / highest values
+
+```{r}
+
+
+
+```
+
+# What are the smallest / highest values for each year and continent? 
+
+# And, what countries are these? 
+
+```{r}
+gapminder %>%
+  group_by(year) %>%
+  summarise(min = min(gdpPercap), 
+            country = country[which.min(gdpPercap)])
+
+gapminder %>%
+  group_by(year) %>%
+  summarise(max = max(gdpPercap), 
+            country = country[which.max(gdpPercap)])
+
+```
+
+    
+
+    
+# What can we do to study how average personal wealth and life expectancy are 
+# related? 
+
+
+
+
+
+# We limit our analysis to one year
+
+```{r}
+gapminder %>%
+  filter(year == 1967) %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()  + 
+  theme_classic()
+```
+
+
+# *Or one continent 
+
+```{r}
+#This pools all country-year observations for countries within Asia
+
+gapminder %>%
+  filter(continent == "Asia") %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() +
+  theme_classic()
+```
+
+# Or, we can look at one specific country and look at measurements of wealth 
+# and lifeexpectancy at different points in time 
+
+```{r}
+gapminder %>%
+  filter(country == "India") %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() + 
+  theme_classic()
+```
+
+
+# Ok, let's pool all observations again  
+
+```{r}
+gapminder %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point(size = .5) + 
+  theme_classic()
+```
+
+--> When we look at all of our country-year pairs, it becomes apparent that 
+    there seem to be a lot of observations with low gdpPercap 
+    
+    
+    
+    
+    
+## Log transforming gdpPercap 
+
+```{r}
+gapminder$log_gdp <- log(gapminder$gdpPercap)
+
+# A log transformation retains the scale, but effectively compresses the distance
+# between observations. 
+```
+
+# Now, let's look at another scatterplot 
+
+```{r}
+gapminder %>%
+  ggplot(aes(x = log_gdp, y = lifeExp)) +
+  geom_point() + 
+  theme_classic() 
+  
+```
+
+--> How would you now describe the relationship between GDP and life expectancy?
+
+
+--> What issue do you notice with our X axis? 
+
+
+
+```{r}
+gapminder %>%
+  ggplot(aes(x = log_gdp, y = lifeExp)) +
+  geom_point() + 
+  theme_classic() +
+  scale_x_continuous(
+    breaks = log(c(300, 3000, 30000)),  # I create log-transformed breaks
+    labels = c("300 USD", "3,000 USD", "30,000 USD")  # Labels in real USD
+  ) +
+  labs(x = "GDP per Capita (USD)")
+```
+
+
+
+Conceptually, why might GDPpc and life expectancy be related? 
+
+# Do you think that this relationship might differ by continent? 
+
+--> Why might that be so? 
+
+# Let's investigate visually 
+
+```{r}
+gapminder %>%
+  filter(continent == "Africa") %>%
+  ggplot(aes(x = log_gdp, y = lifeExp)) +
+  geom_point() +
+  theme_classic()
+
+gapminder %>%
+  filter(continent == "Americas") %>%
+  ggplot(aes(x = log_gdp, y = lifeExp)) +
+  geom_point() +
+  theme_classic()
+```
+
+# We can do even better in ggplot 
+
+```{r}
+gapminder %>%
+  ggplot(aes(x = log_gdp, y = lifeExp, group = continent, color = continent)) +
+  geom_point() +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(
+    breaks = log(c(300, 3000, 30000)),  
+    labels = c("300 USD", "3,000 USD", "30,000 USD")  
+  ) +
+  labs(x = "GDP per Capita (USD)")
+```
+
+# Now, let's get a bit more fancy 
+
+```{r}
+
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot(aes(x = log_gdp, y = lifeExp, group = continent, color = continent,
+             shape = continent)) +
+  geom_point(alpha = .3) +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  geom_jitter() +
+  geom_rug(alpha = 1/4, position = "jitter") +
+  scale_x_continuous(
+    breaks = log(c(300, 3000, 30000)),  
+    labels = c("300 USD", "3,000 USD", "30,000 USD") 
+  ) +
+  labs(x = "GDP per Capita (USD)")
+
+
+```
+
+
+# At minimum, we can see that African countries look to be in the lower left 
+# quadrant - on average; and Europen countries in blue are in the upper right
+
+# Let's look at that more closely
+
+```{r}
+gapminder %>%
+  filter(year == 2007, continent == "Africa") %>%
+  ggplot(aes(x = log_gdp, y = lifeExp, group = continent, color = continent)) +
+  geom_point(alpha = .3) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  geom_jitter() +
+  geom_rug(alpha = 1/2, position = "jitter") 
+```
+
+```{r}
+gapminder %>%
+  filter(year == 2007, continent == "Europe") %>%
+  ggplot(aes(x = log_gdp, y = lifeExp, color = "red")) +
+  geom_point(alpha = .3) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  geom_jitter() +
+  geom_rug(alpha = 1/2, position = "jitter") +
+  geom_text_repel( aes(label = country) )
+```
+
+# Does anyone notice a pattern across European countries? 
+
+
+
+# Let's look at some specific countries 
+
+```{r}
+
+library(ggrepel)
+library(MASS)
+library(RColorBrewer) 
+
+# Here, I am specifying a specific color palette -- instead of using ggplot's 
+# defaults. 
+
+colors <- brewer.pal(n = 5, "Set1") 
+# Here, I am choosing specific colors to use below
+
+red <- colors[1] 
+blue <- colors[2] 
+green <- colors[3]
+orange <- colors[4]
+purple <- colors[5]
+
+
+gapminder %>%
+  filter(year == 2007,
+         country %in% c("Germany", "Japan", "United States", "France", "Mexico",
+                        "China", "Kuwait", "India", "Brazil", "Tunisia", "Egypt",
+                        "Saudi Arabia", "Iran", "Australia")) %>%
+  ggplot(aes(x = log_gdp, y = lifeExp, group = continent, color = continent)) +
+  geom_point(alpha = .3) +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.title = element_blank()) +
+  geom_rug(alpha = 1/2, position = "jitter") +
+  geom_text_repel( aes(label = country) ) + 
+  ggtitle("Life Expectancy and GDP pc in 2007") + 
+  xlab("GDP per Capita (USD)") + 
+  ylab("Life Expectancy in years") +
+    scale_color_manual( 
+    values = c( "Europe" = green, 
+                "Asia" = red, 
+                "Americas" = blue,
+                "Africa" = orange,
+                "Oceania" = purple
+                )) +
+   scale_x_continuous(
+    breaks = log(c(3000, 10000, 40000)),  
+    labels = c("3000 USD", "10,000 USD", "40,000 USD") 
+  )
+
+```
+
+
+# Ok, let's take a step back 
+
+# There is a clear positive relationship between wealth and life expectancy
+
+# But, it looks like this relationship is not identical across the world
+
+```{r}
+
+gapminder %>%
+  filter(!continent == "Africa") %>%
+  ggplot(aes(x = log_gdp, y = lifeExp)) +
+  geom_point() + 
+  theme_classic()
+
+
+gapminder %>%
+  filter(continent == "Africa") %>%
+  ggplot(aes(x = log_gdp, y = lifeExp)) +
+  geom_point() + 
+  theme_classic()
+
+```
+
+# What is the correlation between these variables? 
+
+```{r}
+cor(gapminder$gdpPercap, gapminder$lifeExp)
+
+cor(gapminder$log_gdp, gapminder$lifeExp)
+```
+
+# Is this correlation different for each continent? 
+```{r}
+gapminder %>%
+  group_by(continent) %>%
+  summarise(correlation = cor(gdpPercap, lifeExp))
+```
+
+# There are dramatic differences in how strongly these variables are 
+# linearly related across continents! 
+
+--> It appears that whatever the causal effect of wealth on life expectancy might 
+    be -- it is different across the world
+    
+    
+# Let's look at Asia 
+
+```{r}
+gapminder %>%
+  filter(continent == "Asia") %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() + 
+  theme_classic()
+```
+
+# And Oceania
+
+```{r}
+gapminder %>%
+  filter(continent == "Oceania") %>%
+  ggplot(aes(x = log_gdp, y = lifeExp)) +
+  geom_point() + 
+  theme_classic()
+```
+
+# on the same plot 
+
+```{r}
+gapminder %>%
+  filter(continent %in% c("Oceania", "Asia")) %>%
+  ggplot(aes(x = log_gdp, y = lifeExp, color = continent)) +
+  geom_point() + 
+  theme_classic()
+```
+
+# ggplot has the option of fitting a linear model to the data (linear regression)
+
+```{r}
+
+gapminder %>%
+  ggplot(aes(x = log_gdp, y = lifeExp)) +
+  geom_point() + 
+  theme_classic() +
+  geom_smooth(method = "lm")
+
+# --> This depicts a linear regression line that is fitted to the observations
+```
+
+# Does the linear model differ for each continent? It really should as we have seen
+
+```{r}
+gapminder %>%
+  ggplot(aes(x = log_gdp, y = lifeExp, group = continent, color = continent)) +
+  geom_point(size = .3) + 
+  theme_classic() +
+  geom_smooth(method = "lm")
+```
+

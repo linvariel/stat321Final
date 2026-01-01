@@ -1,0 +1,220 @@
+---
+title: 'CSSS/SOC/STAT 321: Problem Set #2'
+subtitle: 'Due: Thursday, February 1, 2024'
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+```{r, include=FALSE}
+library(tidyverse)
+library(tinytex)
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+library(viridis)
+library(viridisLite)
+
+rm(list = ls()) # clean memory
+```
+
+In this exercise, we will analyze the relationship between various demographic traits and pro-feminist voting behavior among circuit court judges. In a recent paper, Adam N. Glynn and Maya Sen argue that having a female child causes circuit court judges to make more pro-feminist decisions. The paper can be found at: 
+
+Glynn, Adam N., and Maya Sen. (2015). ["Identifying Judicial Empathy: Does Having Daughters Cause Judges to Rule for Women's Issues?."](https://doi.org/10.1111/ajps.12118) *American Journal of Political Science* Vol. 59, No. 1, pp. 37--54.
+
+The dataset `dbj.csv` contains the following variables about individual judges:
+
+ -------------------------------- ----------------------------------------------------------
+ Name                             Description
+ -------------------------------- ----------------------------------------------------------
+ `name`                           The judge’s name
+ 
+ `child`                          The number of children each judge has.
+ 
+ `circuit.1`                      Which federal circuit the judge serves in.
+ 
+ `girls`                          The number of female children the judge has.
+ 
+ `progressive.vote`               The proportion of the judge’s votes on women’s issues which 
+                                  were decided in a pro-feminist direction.
+                                  
+ `race`                           The judge’s race (`1` = white, `2` = African-American, 
+                                  `3` = Hispanic, `4` = Asian-American).
+                                  
+ `religion`                       The judge’s religion (`1` = Unitarian, `2` = Episcopalian, `3` = Baptist, 
+                                  `4` = Catholic, `5` = Jewish, `7` = Presbyterian, `8` = Protestant, 
+                                  `9` = Congregationalist, `10` = Methodist, `11` = Church of Christ, 
+                                  `16` = Baha'i, `17` = Mormon, `21` = Anglican, `24` = Lutheran, `99` = unknown). 
+                                  
+ `republican`                     Takes a value of `1` if the judge was appointed by a Republican president, `0` otherwise.
+                                  Used as a proxy for the judge’s party.
+                                  
+ `sons`                           The number of male children the judge has.
+ 
+ `woman`                          Takes a value of `1` if the judge is a woman, `0` otherwise.
+ 
+ `X`                              Indicator for the observation number.
+ 
+ `yearb`                          The year the judge was born.
+ -------------------------------------------------------------------------------------------
+ 
+## Question 1
+
+Load the `dbj.csv` file. Find how many judges there are in the dataset, as well as the gender and party composition of our dataset. Is the party composition different for male and female judges? Additionally, note that our outcome in this exercise will be the proportion of pro-feminist rulings. What is the range of this variable (`progressive.vote`)? 
+```{r}
+datdbj <- read.csv("dbj.csv")
+
+#checking for missing data
+# sum(is.na(datdbj))
+# there are no missing values in this dataset.
+
+#number of judges in the dataset
+nrow(datdbj)
+
+#gender and party composition of dataset
+mean(datdbj$woman)
+mean(datdbj$republican)
+addmargins(table(gender = datdbj$woman, party = datdbj$republican))
+
+#party composition based on gender
+dbj.f <- subset(datdbj, datdbj$woman == 1)
+dbj.m <- subset(datdbj, datdbj$woman == 0)
+mean(dbj.f$republican)
+mean(dbj.m$republican)
+
+#range of 'progressive.vote' variable
+summary(datdbj$progressive.vote)
+min(datdbj$progressive.vote)
+max(datdbj$progressive.vote)
+```
+*Q1: There are 224 judges in the dataset. Composition: About 17% of judges in the dataset are women and the remaining majority (83%) are men, so gender is not very balanced. Approximately 54% of judges in the dataset are in the Republican party. There is a smaller percentage of female judges that are Republican (29%) compared to male judges (59%).* 
+*The range of the `progressive.vote` variable is from 0 to 1, with 0 meaning a judge is voting no progressive (pro-feminist) votes and 1 meaning all votes are progressive votes.*
+
+
+## Question 2
+
+Next, we consider differences between some groups. For each of the four groups (Republican men/women, Democratic men/women) defined by gender and partisanship, create a boxplot (using a single command) that illustrates the differences in `progressive.vote`.  Briefly interpret the results of the analysis. For example, do any of the results surprise you? Does it appear that partisanship, gender, or both contribute to progressive voting patterns? Should we interpret any of these effects causally? Why or why not?
+```{r}
+datdbj <- datdbj %>%
+  mutate(drfm_cat = case_when(
+    woman == 1 & republican==1 ~ "Republican Woman", 
+    woman == 1 & republican==0 ~ "Democratic Woman", 
+    woman == 0 & republican==1 ~ "Republican Man", 
+    woman == 0 & republican==0 ~ "Democratic Man"))
+
+ggplot(datdbj, aes(x=drfm_cat,y=progressive.vote)) +
+  geom_boxplot() +
+    ggtitle("Proportion of the Pro-Feminist Vote by Gender and Partisanship") +
+    theme_classic() +
+    xlab("Gender and Partisanship") + ylab("Proportion of Pro-Feminist Votes")
+
+#code using base R and not ggplot would be:
+#boxplot(progressive.vote ~ woman + republican, data = datdbj, 
+    #xlab = "Gender and Partisanship", 
+    #ylab = "Proportion of pro-feminist decisions", 
+    #main = "Proportion of the Pro-Feminist Vote by Gender and Partisanship",
+    #names = c("Dem. Men", "Dem. Women", "Rep. Men", "Rep. Women"))
+```
+*Q2: The Democratic party seems to have a higher proportion of pro-feminist-direction votes than the Republican party. The proportion of progressive votes for Republican men and women are lower than those of Democratic men and women. *
+*The median of progressive votes for Democratic men is slightly higher than that of Democratic women, while the median for Republican men and women are about the same, though progressive votes for Republican men seem to be more widely distributed than for Republican women.*
+*We cannot interpret partisanship and the proportion of pro-feminist votes causally due to the possibility of confounding variables - judges who choose to be in the Republican party are different from those who choose to be in the Democratic party, so partisanship is not random.*
+
+## Question 3
+
+Create a new binary variable which takes a value of `1` if a judge has *at least* one child (that is, any children at all), `0` otherwise. Then, use this variable to answer the following questions. Are Republicans and Democrats equally likely to be parents (that is, have at least one child)? Do judges with children vote differently than judges without?  If so, how are they different? Do republican and democratic parents vote differently on feminist issues?
+```{r}
+#new binary variable for judges with at least 1 child
+datdbj$at_least1child <- ifelse(datdbj$child >= 1, 1, 0)
+
+#Proportion of Republicans and Democrats that have at least one child
+tapply(datdbj$republican, datdbj$at_least1child, mean)
+
+#Judges with and without children voting differently
+judges_none <- subset(datdbj, datdbj$at_least1child==0)
+judges_atleast1 <-subset(datdbj, datdbj$at_least1child==1)
+mean(judges_none$progressive.vote)
+mean(judges_atleast1$progressive.vote)
+mean(judges_none$progressive.vote) - mean(judges_atleast1$progressive.vote)
+
+#republican and democratic parents voting differently
+rep_parent <- subset(datdbj, datdbj$at_least1child==1 & datdbj$republican==1)
+dem_parent <- subset(datdbj, datdbj$at_least1child==1 & datdbj$republican==0)
+mean(rep_parent$progressive.vote) - mean(dem_parent$progressive.vote)
+
+```
+*Q3: Republicans and Democrats are somewhat equally likely to be parents, with Republicans very slightly (2%) more likely to be parents (54%) than Democrats (52%) - no parties are over-represented since both parties are equally likely to have children (e.g. No single party has more children and therefore more chance of having daughters). *
+*Judges with no children and judges with children seem to vote about the same proportion of progressive/pro-feminist votes (46% and 43%), with judges that have no children voting about 3% more progressive votes that those with children. *
+*Democratic parents (at least one child) tend to vote more progressively compared to Republican parents with the difference in proportions of progressive votes 12 percentage points higher for Democrats than Republicans, which could partially be attributed to the fact that overall, based on the previous box plot, Democrats appear to vote more progressively than Republicans.*
+
+## Question 4
+
+What is the difference in the proportion of pro-feminist decisions between judges who have at least one daughter and those who do not have any?  Compute this difference in two ways; (1) using the entire sample, (2) separately by the number of children judges have (only considering judges that have 3 children or less).  What assumptions are required for us to interpret these differences as causal estimates?
+```{r}
+#judges who have at least 1 daughter vs. no daughters
+#proportion of pro-feminist decisions between judges who have at 
+#least one daughter and judges who don't have any
+#entire sample of judges
+judges_yesd <- subset(datdbj, datdbj$girls >= 1)
+judges_nod <- subset(datdbj, datdbj$girls == 0)
+mean.entire <- mean(judges_yesd$progressive.vote) - mean(judges_nod$progressive.vote)
+mean.entire
+
+#entire sample of judges who have at least 1 child
+jatleast1ch_yesd <- subset(judges_atleast1, judges_atleast1$girls >= 1)
+jatleast1ch_nod <- subset(judges_atleast1, judges_atleast1$girls == 0)
+mean.entire1child <- mean(jatleast1ch_yesd$progressive.vote) - mean(jatleast1ch_nod$progressive.vote)
+mean.entire1child 
+
+#separately by number of children they have (up to 3 children)
+#Judges with 1 child
+judges_1ch <- subset(datdbj, datdbj$child == 1)
+j_1ch1d <- subset(judges_1ch, judges_1ch$girls >= 1)
+j_1ch0d <- subset(judges_1ch, judges_1ch$girls == 0)
+mean.1ch <- mean(j_1ch1d$progressive.vote) - mean(j_1ch0d$progressive.vote)
+mean.1ch
+#Judges with 2 children
+judges_2ch <- subset(datdbj, datdbj$child == 2)
+j_2ch1d <- subset(judges_2ch, judges_2ch$girls >= 1)
+j_2ch0d <- subset(judges_2ch, judges_2ch$girls == 0)
+mean.2ch <- mean(j_2ch1d$progressive.vote) - mean(j_2ch0d$progressive.vote)
+mean.2ch
+#Judges with 3 children
+judges_3ch <- subset(datdbj, datdbj$child == 3)
+j_3ch1d <- subset(judges_3ch, judges_3ch$girls >= 1)
+j_3ch0d <- subset(judges_3ch, judges_3ch$girls == 0)
+mean.3ch <- mean(j_3ch1d$progressive.vote) - mean(j_3ch0d$progressive.vote)
+mean.3ch
+```
+*Q4: The difference in the proportion of pro-feminist decisions between judges who have at least one daughter and those who do not have any daughters (including judges who do not have children at all) is around 0.06. When looking at only the judges who do have children, the difference is 0.11, so judges who have daughters tend to vote slightly more progressively than judges with children but no daughters. *
+*The difference for judges with 1 child who have 1 daughter or no daughter is the highest (0.24) compared to the other values which compare the difference for judges with 2 and 3 children with and without daughters. The difference for judges with 2 children who have at least 1 daughter or no daughters is 0.08 and 0.19 for judges with 3 children.* 
+*Generally, judges who have daughters vote slightly more progressively than those who do not. Genders of the judges' children/number of daughters a judge has are assumed to be randomly assigned (e.g. none are adopted, etc.).*
+
+## Question 5
+
+Next, we are going to consider the design of this study. The original authors assume that conditional on the number of children a judge has the number of daughters is random (as we did in the previous question).  Indeed, this is the assumption that would justify the analysis of the previous question. For example, among the judges who have two children, the number of daughters -- either `0`, `1`, or `2` -- has nothing to do with the (observed or unobserved) pre-treatment characteristics of judges.  Is this assumption reasonable?  Is there a scenario under which this assumption can be violated?  Do the data support the assumption?
+```{r}
+#Some of the observed and unobserved pre-treatment variables are partisanship, 
+#year born, race, religion, and gender.
+
+#Among judges with 1 child #judges_1ch 
+mean(judges_1ch$girls) #Would expect something around 0.5 (0 or 1)
+
+#Among judges with 2 children #judges_2ch 
+mean(judges_2ch$girls) #would expect something around 1 (0, 1, or 2)
+
+#Among judges with 3 children #judges_3ch 
+mean(judges_3ch$girls) #would expect something around 1.5 (0, 1, 2, 3)
+
+
+#For all numbers of children
+tapply(datdbj$girls, datdbj$child, mean)
+
+#There should be very weak to no correlation between any of these 
+#variables and the number of daughters a judge has.
+#tapply(datdbj$girls, datdbj$race, mean) All around the same value
+#tapply(datdbj$girls, datdbj$religion, mean) All around the same value, 
+#implying no obvious correlation between these variables and the number of 
+#girls a judge has.
+
+```
+*Q5: If we expect the number of girls a judge (with a certain number of children) has to be random, then the average number of girls should be around 0.5 (50% chance boy, 50% chance girl) for judges with 1 child, 1.0 for judges with 2 children, 1.5 for judges with 3 children, and so on. The calculated averages are fairly close to those values, so it is reasonable to assume that the gender of judges' children is randomly assigned and not greatly affected by the pre-treatment variables.*

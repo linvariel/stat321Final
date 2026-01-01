@@ -1,0 +1,186 @@
+---
+title: "W4D1 lab - Gapminder"
+author: "Student name"
+date: "1/22/2024"
+output:
+  pdf_document:
+    latex_engine: pdflatex
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, error = FALSE)
+
+rm(list = ls()) # clean memory
+
+```
+
+
+```{r}
+
+# Start by installing this package 
+
+install.packages("ggthemes")
+
+# Load both tidyverse and ggthemes
+
+x
+library(tidyverse)
+library(ggthemes)
+
+```
+
+## Introduction
+
+Let's revisit several functions or concepts we've learnt from lecture, QSS tutorials, and the first assignment 
+
+
+* `tapply()`
+
+* `ggplot2`
+
+* `quantile()`
+
+* `ifelse()` or `case_when`
+
+* class `factor`  
+
+
+
+## Load the gapminder data again
+
+```{r}
+gapminder <- read.csv("gapminder.csv")
+
+head(gapminder)
+view(gapminder)
+```
+
+## `tapply` for group means
+
+Using the `tapply` function, please find:
+
+1. The average `gdpPercap` for each `continent`
+
+2. The average `gdpPercap` for each `year`
+
+3. The average `gdpPercap` for each `continent` over every `year`
+
+```{r}
+tapply(gapminder$gdpPercap, gapminder$continent, mean)
+
+tapply(gapminder$gdpPercap, gapminder$year, mean)
+# You can combine multiple index variables in tapply using list()
+tapply(gapminder$gdpPercap, list(gapminder$continent, gapminder$year), mean)
+
+# Are there any NAs in the dataset? 
+# No :D
+# To ignore NA values, add na.rm = T or TRUE
+
+```
+
+```{r}
+
+#Alternatively, we can do the same thing in dplyr (which is a package within tidyverse)
+gapminder %>% #pipe operator
+  group_by(continent, year) %>% 
+  summarise(average_gdp = mean(gdpPercap)) %>%
+  ggplot(aes(x = year, y = average_gdp, group = continent, color = continent)) + 
+  geom_point(size = 0.75) + # empty plot. Use + sign to specify "geometry layer". 
+  geom_line() +
+  xlab("") +
+  ylab("Average GDP (in dollars)") +
+  theme_economist() +
+
+# can assign this workflow to an object.
+
+```
+
+## quantile and ifelse
+
+Using `quantile` and `ifelse` or `case_when` function, please create:
+
+1. An object `gdp_qt` that records the quartiles of the `gdpPercap` variable
+
+```{r}
+gdp_qt <- quantile(gapminder$gdpPercap)
+gdp_qt
+```
+
+2. A new variable `poverty` that takes the value of 1 if `gdpPercap` is lower than or equal to the *lower* quartile; 0 otherwise. What is the `sum` of countries in poverty? And their proportion?
+
+```{r}
+gapminder$poverty <- ifelse(gapminder$gdpPercap <= gdp_qt[2], 1, 0)
+
+  
+  
+```
+
+
+3. A new variable `gdpPercap_cat` that converts `gdpPercap` into four categories: `poor`, `middle`, `wealthy`, and `very wealthy` based on quartiles in `gdp_qt`
+
+```{r}
+
+# You can stack multiple conditions in ifelse
+gdpPercap_cat <- ifelse(gapminder$gdpPercap <= gdp_qt[2], "poor",
+                        ifelse(gapminder$gdpPercap <=))
+
+
+
+```
+
+
+```{r}
+# There is a way to do the same thing in dplyr 
+
+
+```
+
+
+4. Use `tapply` to find the mean of `lifeExp` for each income group, based on `gdpPercap_cat`
+
+```{r}
+
+```
+
+5. Do the same thing using `group_by` and `summarise` 
+
+```{r}
+
+```
+
+
+
+## Factor
+
+How to inform `R` that `gdpPercap_cat` has an inherent order? 
+
+1. Check out the class of `gdpPercap_cat`
+
+2. Use `factor()` to convert `gdpPercap_cat` into factor, and specify the `levels = c(...)` argument
+
+3. Check out the class of `gdpPercap_cat` again
+
+4. Use `tapply` to find the mean of `lifeExp` for each income group, based on `gdpPercap_cat`
+
+```{r}
+
+```
+
+
+\pagebreak
+
+## Appendix: R Code
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+
+```
+
+
+
+
+
+
+

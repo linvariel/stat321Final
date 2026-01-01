@@ -1,0 +1,246 @@
+---
+title: "CSSS 321: Code from Class 5.2"
+subtitle: "In-Class Demo -- Fake Data"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This exercise based on simulated (fake) data will have us analyzing the relationship between the demographic traits of (fake) city council members and their voting behavior, specifically with respect to investment in parks \& recreation.
+
+The dataset `fake-data-class-5-2.csv` contains the following variables about individual council members:
+
+-------------------------------- ----------------------------------------------------------
+Name                             Description
+-------------------------------- ----------------------------------------------------------
+`county.num`                     The county the individual holds a seat
+ 
+`pet.count`                      The number of pets each council member has
+
+`dog.count`                      The number of dogs each council member has
+
+`otherpet.count`                 The number of non-dog pets each council member has
+
+`woman`                          Takes a value of `1` if the council member is a woman, `0` otherwise
+
+`race`                           The council member’s race (`1` = white, `2` = African-American, 
+                                  `3` = Hispanic, `4` = Asian-American)
+
+`religion`                       The council member’s religion (`1` = Unitarian, `2` = Episcopalian, `3` = Baptist, 
+                                  `4` = Catholic, `5` = Jewish, `7` = Presbyterian, `8` = Protestant, 
+                                  `9` = Congregationalist, `10` = Methodist, `11` = Church of Christ, 
+                                  `16` = Baha'i, `17` = Mormon, `21` = Anglican, `24` = Lutheran, `99` = unknown). 
+                                  
+`republican`                     Takes a value of `1` if the council member is Republican, `0`                                         otherwise.
+
+`proparks.vote`               The proportion of the council member’s votes supporting increased                                     investment in parks and recreation
+-------------------------------------------------------------------------------------------
+
+
+## Loading and Exploring the Data Frame
+
+Load the data and create a new dataframe called `dat`. 
+```{r}
+dat <- read.csv("data/fake-data-class5-2.csv")
+nrow(dat)
+table(dat$woman)
+table(dat$race)
+table(dat$republican)
+```
+
+Gender composition leans heavily male! Party composition is more even, but let's look at the breakdown by gender...
+
+```{r}
+females <- dat[dat$woman == 1,]
+males <- dat[dat$woman != 1,]
+
+table(females$republican)
+table(males$republican)
+```
+
+We can see that more men are Republican than women. 
+
+Let's examine our outcome variable, `proparks.vote`...
+
+```{r}
+summary(dat$proparks.vote)
+```
+
+We can see that our outcome variable `proparks.vote` ranges from 0 to 1, meaning that some of our council members voted against all parks projects (0) while others voted for all parks projects (1). Let's investigate how many council members are in these two categories...
+
+```{r}
+always <- subset(dat, proparks.vote == 1)
+never <- subset(dat, proparks.vote == 0)
+
+## how many?
+nrow(always)
+nrow(never)
+```
+
+`r nrow(always)` council members decided all of their rulings in a pro-parks directions, while `r nrow(never)` council members never did so.
+
+## Differences Between Groups?
+
+Let's explore some of the differences between groups. For each of the four groups (Republican men/women, Democratic men/women) defined by gender and partisanship, we can use a boxplot that illustrates the differences in `proparks.vote`.
+
+```{r}
+boxplot(proparks.vote ~ woman + republican, data = dat, 
+        xlab = "Gender and Partisanship", 
+        ylab = "Proportion of pro-parks decisions", 
+        main = "Proportion of the Pro-Parks Vote by Gender and Partisanship",
+        names = c("Dem. Men", "Dem. Women", "Rep. Men", "Rep. Women"))
+```
+
+It seems like party and `proparks.vote` could be related, as Democrats show greater support for parks than Republicans for both genders. It could be that partisanship and gender affect council members support for investment in parks, but we should not interpret these effects causally, as we can not remove the possibility of confounders. For example, many factors can lead to one's party identification - it is certainly not random. 
+
+## Partisanship and Likelihood of Having a Pet
+
+First, we might wonder whether Republicans and Democrats equally likely to have at least one pet.
+
+```{r}
+dat$pet.indicator <- ifelse(dat$pet.count >= 1, 1, 0)
+
+## How many council members in the data set have at least one pet?
+table(dat$pet.indicator)
+```
+
+First, we see that the overwhelming majority of council members do have pets. Next, let's look at the partisanship of pet owners and see whether republicans and democrats are equally likely to be parents? 
+
+```{r}
+diff.pets.party <- (mean(dat$pet.indicator[dat$republican==1])) - 
+  (mean(dat$pet.indicator[dat$republican==0]))
+diff.pets.party
+```
+Republicans are very slightly more likely to have pets, but this is a very small difference - the parties are nearly indistinguishable here. 
+
+## Pet Ownership and Support for Investment in Parks and Recreation
+
+Next, let's see whether council members with pets vote differently than council members without?
+
+```{r}
+diff.means.pets <- (mean(dat$proparks.vote[dat$pet.indicator==1])) - 
+  (mean(dat$proparks.vote[dat$pet.indicator==0]))
+diff.means.pets
+```
+This effect is larger, if not huge! It does appear that council members with pets are *more* likely (it's positive) to vote in favor of investment in parks and recreation than those without. 
+
+## Do republican and democratic pet owners vote differently on investments in parks and recreation?
+
+```{r}
+rep.pets.mean <- mean(dat$proparks.vote[dat$republican==1 & dat$pet.indicator ==1])
+dem.pets.mean <- mean(dat$proparks.vote[dat$republican==0 & dat$pet.indicator == 1])
+rep.pets.mean - dem.pets.mean
+```
+Conditional on having at least one pet, Democrats are much more likely to vote in favor of parks and recreation, we see a difference of `r abs(round(rep.pets.mean - dem.pets.mean, digits = 2)) * 100` percentage points.  Again, it is difficult to know why this difference arises given that Democrats with pets may differ from Republican with pets in many respects.
+
+## Do council members who have at least one dog vote differently than those who have none? 
+
+Let's first do this looking at the entire sample. We'll start by subsetting for only the council members who have pets, as comparing council members with one dog to those without any pets would not be valid (people who have pets are different from those who do not) - our comparison of interest in the one pet case is between those who have a dog and those who have some other pet. 
+
+How many council members have at least one dog?
+
+```{r}
+# subset dataset for only council members that have pets
+pets <- dat[dat$pet.count >= 1,]
+
+## create indicator for at least one dog
+pets$dog.indic <- ifelse(pets$dog.count >= 1, 1, 0)
+table(pets$dog.indic) 
+```
+
+In our full sample, 300 council members have at least one dog. 
+
+```{r}
+atLeastOneDog <- subset(pets, subset = dog.indic == 1)
+noDogs <- subset(pets, subset = dog.indic == 0)
+
+## full sample effect
+overall <- mean(atLeastOneDog$proparks.vote) - mean(noDogs$proparks.vote)
+overall
+```
+Analysis over the entire sample between council members that have at least one pet who is a dog and council members that have at least one pet but no dogs shows a fairly large effect: `r round(overall * 100)` percentage points. 
+
+However, perhaps there is a great deal of heterogeneity (different effects for different types of people) here. Let's break the sample up by the number of pets to explore this further. We'll do the analysis separately for council members with 1, 2, and 3 pets.  
+
+```{r}
+# Subset by One Pet
+onePet <- pets[pets$pet.count == 1,]
+oneDog <- onePet[onePet$dog.count >= 1,]
+noDog <- onePet[onePet$dog.count == 0,]
+
+one <- mean(oneDog$proparks.vote) - mean(noDog$proparks.vote)
+one
+```
+
+```{r}
+# Subset by Two Pets
+twoPets <- pets[pets$pet.count == 2,]
+atLeastOneDog <- twoPets[twoPets$dog.count >= 1,]
+noDog <- twoPets[twoPets$dog.count == 0,]
+
+two <- mean(atLeastOneDog$proparks.vote) - mean(noDog$proparks.vote)
+two
+```
+
+```{r}
+# Subset by Three Pets
+threePets <- pets[pets$pet.count == 3,]
+atLeastOneDog <- threePets[threePets$dog.count >= 1,]
+noDog <- threePets[threePets$dog.count == 0,]
+
+three <- mean(atLeastOneDog$proparks.vote) - mean(noDog$proparks.vote)
+three
+```
+
+```{r}
+breakdown <- rbind(one, two, three)
+rownames(breakdown) <- c("one pet", "two pet", "three pet")
+breakdown
+```
+
+We see a great deal of heterogeneity here! Council members with one pet and three pets have large differences in average `proparks.vote` between council members with at least one dog and those without, `r round(one * 100)` and `r round(three * 100)` percentage points, respectively. However, the effect for two pets is much smaller than both - only `r round(two * 100)` percentage points. 
+
+In order to interpret this estimate causally, we must assume that, conditional on the number of pets a council member has, the number of dogs is random. This is *not* to say that the number of pets is random. Many factors in a council member's life may be related to how many pets they decide to have. If we condition on the *number* of pets a council member has, then we are assuming that the type of pet is sufficiently random -- is that reasonable?!
+
+## Exploring the reasonableness of this assumption
+
+Let's say we want to assume that conditional on the number of pets a council member has, the number of dogs is random. For example, among the council members who have two pets, the number of dogs -- either `0`, `1`, or `2` -- has nothing to do with the (observed or unobserved) pre-treatment characteristics of council members.  
+
+If the council members decide the number of pets to have independently of their type (dog or non-dog), this assumption is reasonable.  However, if council members have a preference for a type of pet, this assumption may be violated. 
+
+The simplest way to start analyzing this is to analyze the average pet type for council members separately by the number of pets they have. We can find the average number of dogs for council members with 1, 2, 3. etc. pets separately. 
+
+If the number of dogs conditional on the number of pets truly is random, then we would expect to see an average of 0.5 dogs for council members with one pet. 
+
+```{r}
+tapply(dat$dog.count, dat$pet.count, mean)
+```
+
+Notice that we cannot do this for all numbers of pets in our dataset by simply taking the average number of dogs: this would work for 1 pet, but as soon as we move to 2 we would expect to see an average of 1 dog per 2 pets instead of 0.5 like in the 1 pet case. We could either keep this in mind as we interpret the output of `tapply()` above, or normalize. 
+
+```{r}
+## normalized proportion
+dat$dog.prop <- dat$dog.count / dat$pet.count 
+tapply(dat$dog.prop, dat$pet.count, mean)
+```
+
+Both look reasonable, all of the normalized proportions are about 0.5 and the average number of dogs is also reasonable (approximately .5 dogs for council members with 1 pet, approximately 1 dog for council members with 2 pets, etc.). This evidence seems to suggest that there is no blatant pet-type preference going on here, but recall that it may be true for particular confounders. 
+
+We can complete such an analysis for a single confounder. Let's consider the possibility that religious beliefs may affect a pet-type preference. We will check whether or not dog proportions are far from random in the Catholic subset of our data. 
+
+```{r}
+## catholic is the 4th religion
+dat$catholics <- ifelse(dat$religion == 4, 1, 0)
+
+catholics <- dat[dat$catholics == 1,]
+nonCatholics <- dat[dat$catholics == 0,]
+
+mean(catholics$dog.count)
+mean(nonCatholics$dog.count)
+```
+
+Catholic council members are slightly less likely to have dogs, but the difference is not terribly large. This suggests that non-Catholics may prefer having a dog slightly more, but the evidence is certainly not conclusive.

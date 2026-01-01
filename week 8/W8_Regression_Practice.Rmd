@@ -1,0 +1,263 @@
+---
+title: "W8 - Regression in Practice"
+author: "Student Name"
+date: /today
+output:
+  pdf_document:
+    latex_engine: pdflatex
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Prerequisite
+```{r}
+
+options(scipen = 999)
+
+# install.packages("stargazer")
+
+library(stargazer)
+library(tidyverse)
+
+rm(list = ls())
+
+# Set your working directory
+
+```
+
+## Load the gapminder dataset again 
+
+```{r}
+# load data
+gapminder <- read_csv(file = "gapminder.csv")
+```
+
+## Looking back 
+
+We previously investigated the relationship between GDP per capita and Life 
+Expectancy across the world between 1952 - 2007. 
+
+```{r message=TRUE}
+gapminder$log_gdp <- log(gapminder$gdpPercap)
+
+gapminder %>%
+  #filter(year == 2007) %>%
+  ggplot(aes(x = log_gdp, y = lifeExp, group = continent, color = continent)) +
+  geom_point(alpha = .3) +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  geom_jitter() +
+  geom_rug(alpha = 1/4, position = "jitter") +
+  scale_x_continuous(
+    breaks = log(c(300, 3000, 30000)),  
+    labels = c("300 USD", "3,000 USD", "30,000 USD") 
+  ) +
+  labs(x = "GDP per Capita (USD)", y = "Life Expectancy in years")
+
+
+head(gapminder)
+```
+
+Material wealth seems clearly associated with Life expectancy. 
+
+But, to what extent does GDP per capita "predict" a country's life expectancy? 
+
+Another way to say this is: What is the effect of increasing a given country's 
+wealth by a little bit on its average life expectancy? 
+
+If we were to increase Afghanistan's GDP per capita by 1000$/year -- by how
+much would we expect the average life expectancy to change? 
+
+# Regression analysis
+
+Let's begin by running a simple linear regression of `lifeExp` on `gdpPercap` 
+using the entire dataset. 
+
+Then use the `stargazer()` function to report the estimated table. 
+
+**Note**: remember to set the argument type to choose whether to print the results in \LaTeX (for PDF) or *"text"* (for R console). Also, if you want to knit the document in PDF, make sure to activate the code chunk option `results='asis'`.
+
+```{r,results='asis'}
+lifeAndGDPmod <- lm(lifeExp ~ gdpPercap, data = gapminder)
+stargazer(lifeAndGDPmod, type = "text")
+
+```
+
+
+# Interpretation 
+
+How do you interpret the result? 
+
+What does the alpha value (constant) tell us? 
+
+Can we consider the beta_1 to signify a large effect? 
+
+The linear model is poor at predicting life expectancy based on GDP per capita because the two variables do not have a strong correlation (the R-squared value is 0.341). As GDP per capita increases by one USD, the life expectancy increases by a very small amount (0.001). If the GDP per capita is 0 USD, the predicted life expectancy is 53.956 years.
+
+
+# Effect size 
+
+Our regression has modeled Life expectancy as a function of some constant alpha, 
+and the predictor GDP per capita. 
+
+Our estimated beta_1 coefficient signifies:
+
+--> 
+
+
+# Understanding the effect of `gdpPercap`
+
+Find the mean, 25th, and 75th percentile values for gdpPercap
+
+```{r}
+mean <- mean(gapminder$gdpPercap)
+x_25 <- quantile(gapminder$gdpPercap, 0.25)
+x_75 <- quantile(gapminder$gdpPercap, 0.75)
+
+```
+
+How big is the difference between the 25th and the 75th percentile? 
+
+```{r}
+x_75 - x_25
+```
+
+8123.40 USD jump.
+
+What Y values (life expectancy in years) does our model predict for countries 
+that are at the 25th and 75th percentile in Gdp per capita? 
+
+```{r}
+
+# use this syntax to create predictions with new data from your model 
+
+Y_25th <- predict(lifeAndGDPmod, newdata = data.frame(gdpPercap = x_25))
+
+
+Y_75th <- predict(lifeAndGDPmod, newdata = data.frame(gdpPercap = x_75))
+```
+
+Find the difference in the predicted Y values 
+
+```{r}
+Y_75th - Y_25th
+```
+
+6.2
+How do you interpret this value? 
+This a moderately large increase in life expectancy.
+
+
+
+# Confounding
+
+Is it maybe the case that the size of the population of a country determines 
+both the wealth and life expectancy of countries? 
+
+Fit a regression of `lifeExp` on `gdpPercap` that controls for the effect of `pop`
+
+```{r}
+
+model_2 <- lm(lifeExp ~ gdpPercap + pop, data = gapminder)
+
+summary(model_2)
+
+```
+
+How do you interpret these new coefficients? 
+(Intercept)          gdpPercap                pop 
+53.648242352613131  0.000767564618454  0.000000009728224 
+When GDP per capita increases by 1 USD while population is held constant at the average value of population, the life expectancy increases by 0.000767 years. GDP per capita does not seem to be influenced by population.
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+# Interaction effects
+
+As you might remember, we noted that the relationship between wealth and 
+life expectancy appears to work slightly differently across regions of the 
+world.
+(We also noted that it likely works different for every country, logically also
+for different regions within a country. But, we are working with averaged values,
+and we are working with models - so we will always be off from reality. But, that 
+does not mean that we cannot learn anything from our model.)
+
+
+Fit a regression of `lifeExp` that *interacts* `gdpPercap` and `continent`
+
+```{r}
+model_3 <- lm(lifeExp ~ gdpPercap * continent, data = gapminder)
+
+summary(model_3)
+```
+
+How do you interpret these coefficients? 
+Africa is not shown because it is the reference category for the baseline. The intercept is the average life expectancy for the reference category, which is Africa (45.8 years). GDP per capita for reference (Africa) is 0.0013. ContinentAmericas is the intercept compared to the reference category (starts 12 years higher than Africa). The slope coefficient for the Americas is slightly lower than for Africa.
+
+
+What predictions does this interaction model give us for African countries 
+specifically, that move from the 25th percentile in GDP to the 75th percentile? 
+
+Find the 25th and 75th percentile values of `gdpPercap` for African countries.
+
+```{r}
+african <- gapminder %>%
+  filter(continent == "Africa")
+
+x_25af <- quantile(african$gdpPercap, 0.25)
+x_75af <- quantile(african$gdpPercap, 0.75)
+
+```
+
+```{r}
+
+```
+
+
+What are the predicted values for a range of `gdpPercap` values
+
+Create a new vector that ranges from 500 to 5000, in steps of 500. 
+
+```{r}
+
+new_values <- seq(500, 5000, by = 500)
+  
+```
+
+Generate predicted values from your model, using this vector as new values for
+`gdpPercap`, and set the continent to "Africa"
+
+```{r}
+
+pred <- predict(model_3, newdata = data.frame(gdpPercap = new_values, continent = "Africa"))
+
+  
+# Once you have created the new predicted values, you can run the 
+# code below to visualize them
+
+africa_preds <- as.data.frame(cbind(new_values, pred))
+
+africa_preds %>%
+  ggplot(aes(x = new_values, y = pred)) +
+  geom_line() +
+  theme_classic()
+```
+
+Compared to the whole sample of countries, what do you notice about the relation
+ship between `gdpPercap` and `lifeExp`? 
+
+4.8 years (the predicted life expectancy jump) is smaller than 6.2 years despite increasing from 500 to 5000. 
+

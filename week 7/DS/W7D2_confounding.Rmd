@@ -1,0 +1,119 @@
+---
+title: "W7D1 - Confounding and prediction"
+author: "student name"
+date: \today
+output:
+  pdf_document:
+    latex_engine: pdflatex
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Prerequisite
+```{r}
+# install.packages("stargazer")
+
+library(stargazer)
+library(tidyverse)
+
+rm(list = ls())
+
+# load data
+df <- read_csv(file = "sim.csv")
+```
+
+
+# Regression analysis
+
+Load the dataset sim.csv and plot a scatterplot with y and x variables using ggplot. Fit a linear fit with argument `se=FALSE`.
+
+```{r}
+df %>%
+  ggplot(aes(x=x, y=y)) +
+    geom_point()
+    geom_smooth(method="lm") #adds line of best fit
+
+```
+
+
+Run a regression of y on x and use the `stargazer()` function to report the estimated table. 
+
+**Note**: remember to set the argument type to choose whether to print the results in \LaTeX (for PDF) or *"text"* (for R console). Also, if you want to knit the document in PDF, make sure to activate the code chunk option `results='asis'`.
+
+```{r}
+#manually generate a regression model object
+m1 <- lm(y ~ x, data = df)
+
+summary(m1)
+coef(m1)
+
+stargazer::stargazer(m1, type="text")
+```
+
+
+# Confounding
+
+
+Create a scatter plot including z in the color aesthetics and a boxplot using ggplot to compare x and y conditional on z.
+
+
+```{r}
+# create a scatterplot with z
+df %>%
+  ggplot(aes(x=x,y=y, color=factor(z))) +
+    geom_point() +
+    geom_smooth(method = "lm")
+
+
+# boxplot of x and y using Z
+
+
+
+```
+
+Now, regress y on x and z. Report the regression model of y on both x and z along with the previous model using stargazer.
+
+```{r}
+m2 <- lm(y ~ x + z, data = df)
+
+stargazer::stargazer(m1,m2, type = "text") # Bonus: you can also change type to "latex" which will generate a nice table when the file is knitted.
+
+# we estimated a negative relationship with x, but when we include z, x becomes positive (see the plot)
+# z is a confounder.
+
+```
+
+
+
+# Prediction
+
+
+
+To compare the slope of x between the two estimated models, we can compute the **predicted** values of y for a range of hypothetical x values. To do this, we need to create a `tibble()` or `data.frame()` of hypothetical x values from 1 to 12, and then use the `predict()` function. 
+
+For the second model, which includes z as a covariate, we need to create another dataset of hypothetical values that includes a **mean value of z**. This way, the prediction will be based on changes in x while holding z constant at its mean.
+
+
+```{r}
+
+hyp_x <- tibble(x=1:12)
+
+pred_m1 <- predict()
+
+hyp_x2 <- tibble(x=1:12,
+                 z=mean(df$z))
+
+pred_m2 <- predict()
+
+# combine the datasets using cbind()
+
+```
+
+
+
+

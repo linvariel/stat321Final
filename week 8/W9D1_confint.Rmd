@@ -1,0 +1,102 @@
+---
+title: "W9D1 - Uncertainty and confidence intervals"
+author: "Nicolas Wittstock"
+date: \today
+output:
+  pdf_document:
+    latex_engine: pdflatex
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+Variance: how representative is the average
+Confidence interval: is NOT how confident you are in your estimate to the true value. It is a range of possible estimates for the true value around your estimated value.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Prerequisite
+```{r}
+# install.packages("stargazer")
+
+library(stargazer)
+library(tidyverse)
+
+rm(list = ls())
+
+# data is simulated, no need to load anything
+
+library(ggplot2)
+
+# Set the seed for reproducibility
+set.seed(123)
+
+# Generate the population data with 1000 observations
+population <- runif(1000, min = 0, max = 4)
+
+```
+
+
+# Simulation of random sampling
+
+```{r}
+# Calculate the true population mean
+true_mean <- mean(population)
+
+# Randomly select 3 sets of 100 observations each
+sample1 <- sample(population, size = 100)
+sample2 <- sample(population, size = 100)
+sample3 <- sample(population, size = 100)
+
+# Calculate the sample means
+sample1_mean <- mean(sample1)
+sample2_mean <- mean(sample2)
+sample3_mean <- mean(sample3)
+
+# Calculate the sample standard deviations
+sample1_sd <- sd(sample1)
+sample2_sd <- sd(sample2)
+sample3_sd <- sd(sample3)
+
+# Calculate the standard error of the mean
+se1 <- sample1_sd / sqrt(100)
+se2 <- sample2_sd / sqrt(100)
+se3 <- sample3_sd / sqrt(100)
+
+# Calculate the margin of error for three different critical values
+
+me1 <-  # 90% confidence level
+me2 <-   # 95% confidence level
+me3 <-  # 99% confidence level
+
+# Calculate the confidence intervals
+ci1 <- 
+ci2 <- 
+ci3 <- 
+
+# Create a data frame for plotting
+df <- data.frame(Sample = c("Sample 1 (90%)", "Sample 2 (95%)", "Sample 3 (99%)"),
+                 Mean = c(sample1_mean, sample2_mean, sample3_mean),
+                 CI_Lower = c(ci1[1], ci2[1], ci3[1]),
+                 CI_Upper = c(ci1[2], ci2[2], ci3[2]))
+```
+
+
+# Visualize your estimations using ggplot. Use the geometric shapes `geom_pointrange()` and `geom_hline()` to show the confidence intervals and where the true parameter lies.
+
+
+```{r}
+# Plot the distribution of the sub-samples with confidence intervals
+
+df %>% 
+  ggplot(aes(x = Sample, 
+             y = Mean,
+             ymin = CI_Lower, 
+             ymax = CI_Upper)) 
+
+```
+
+
+
+
+

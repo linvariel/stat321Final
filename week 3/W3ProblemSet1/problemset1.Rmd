@@ -1,0 +1,160 @@
+---
+title: "Problem Set 1"
+author: "Ariel Lin"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("rmarkdown")
+```
+
+Importing the boston.csv data:
+```{r}
+bostdat <- read.csv("boston.csv")
+# view(bostdat)
+```
+
+**Question 1 - Co-variate Balance**
+Income
+```{r, include=TRUE}
+# creating objects for treated and control groups
+treated <- subset(bostdat, treatment==1)
+controlled <- subset(bostdat, treatment==0)
+
+# income balance
+tapply(bostdat$income, bostdat$treatment, mean)
+```
+The mean income of the control group was 151,154.40 and the mean income of the treatment group was 135,181.80. The mean income in the control group is slightly higher than that of the treatment group, but two numbers are fairly close.
+
+Gender
+```{r}
+# gender balance
+tapply(bostdat$male, bostdat$treatment, mean)
+```
+The proportion of males in the control group is about 58.8% and the proportion of males in the treatment group is 52.7%. There are slightly more males in the control group than the treatment group, but the proportions are reasonably similar.
+
+**Question 2 - Treatment Effects**
+Pre-treatment average feelings about immigration
+Scale of 1-5, where 1 is most inclusive (pro-immigration) and 5 is least inclusive (anti-immigration)
+```{r}
+mean(treated$numberim.pre, na.rm=TRUE)
+mean(controlled$numberim.pre, na.rm=TRUE)
+
+mean(treated$numberim.pre, na.rm=TRUE) - mean(controlled$numberim.pre, na.rm=TRUE)
+
+```
+The mean value of the treatment group prior to the treatment is about 3.0, and the mean value of the control group is 2.9 (these two values are very close before treatment). The difference between the means of the treatment and control group before treatment is about 0.13 (the mean value of the treatment group is slightly higher), which is fairly small. Both groups have similar attitudes (leaning a little more towards anti-immigration).
+
+Post-treatment average feelings about immigration
+```{r}
+mean(treated$numberim.post, na.rm=TRUE)
+mean(controlled$numberim.post, na.rm=TRUE)
+
+mean(treated$numberim.post, na.rm=TRUE) - mean(controlled$numberim.post, na.rm=TRUE)
+
+```
+The mean value of the treated group after treatment increased slightly from 3.036 to about 3.118, and the mean value of the control group decreased slightly from 2.91 to 2.72. After the treatment, the treatment group seems to have become slightly more conservative/more exclusionary regarding immigration. The treatment does not seem to have a huge effect on changing people's attitudes towards immigration though.
+
+**Question 3 - Effect of College Education on Exclusionary Attitudes**
+College Education
+```{r}
+# creating objects for college education status
+attended_college <- subset(bostdat, college==1)
+no_college <- subset(bostdat, college==0)
+
+# pre-treatment
+mean(attended_college$numberim.pre, na.rm=TRUE)
+mean(no_college$numberim.pre, na.rm=TRUE)
+
+mean(attended_college$numberim.pre, na.rm=TRUE) - mean(no_college$numberim.pre, na.rm=TRUE)
+
+# post-treatment
+mean(attended_college$numberim.post, na.rm=TRUE)
+mean(no_college$numberim.post, na.rm=TRUE)
+
+mean(attended_college$numberim.post, na.rm=TRUE) - mean(no_college$numberim.post, na.rm=TRUE)
+```
+Both before and after treatment, those who attended college have slightly lower mean values/are less conservative (indicated by the negative values of the difference between the means) than the mean values of those who did not attend college. The mean value of those who attended college decreased slightly after treatment from 2.91 to 2.83, while the mean value of those who did not attend college increased slightly from 3.33 to 3.357. 
+
+**Question 4 - ATE of ideology and age**
+Ideology
+```{r echo=T, results='hide'}
+# creating objects for ideology
+id_1 <- subset(bostdat, ideology==1)
+id_2 <- subset(bostdat, ideology==2)
+id_3 <- subset(bostdat,ideology==3)
+id_4 <- subset(bostdat, ideology==4)
+id_5 <- subset(bostdat, ideology==5)
+
+# pretreatment
+mean(id_1$numberim.pre, na.rm=TRUE)
+mean(id_2$numberim.pre, na.rm=TRUE)
+mean(id_3$numberim.pre, na.rm=TRUE)
+mean(id_4$numberim.pre, na.rm=TRUE)
+mean(id_5$numberim.pre, na.rm=TRUE)
+id_pre <- c(mean(id_1$numberim.pre, na.rm=TRUE),mean(id_2$numberim.pre, na.rm=TRUE),mean(id_3$numberim.pre, na.rm=TRUE),mean(id_4$numberim.pre, na.rm=TRUE),mean(id_5$numberim.pre, na.rm=TRUE))
+
+# post-treatment
+mean(id_1$numberim.post, na.rm=TRUE)
+mean(id_2$numberim.post, na.rm=TRUE)
+mean(id_3$numberim.post, na.rm=TRUE)
+mean(id_4$numberim.post, na.rm=TRUE)
+mean(id_5$numberim.post, na.rm=TRUE)
+id_post <- c(mean(id_1$numberim.post, na.rm=TRUE),mean(id_2$numberim.post, na.rm=TRUE),mean(id_3$numberim.post, na.rm=TRUE),mean(id_4$numberim.post, na.rm=TRUE),mean(id_5$numberim.post, na.rm=TRUE))
+
+```
+
+```{r}
+# making a dataframe to display the results more clearly
+ideo <- c(1,2,3,4,5)
+data.frame(ideo, id_pre, id_post)
+```
+The means of those with the most conservative attitudes towards immigration (5) decreased the most overall, while those with ideologies between 1 and 4 stayed relatively the same pre and post-treatment, which slight increases (more anti-immigration) for those who self-rated their ideologies as 2 and 4. 
+
+Age
+```{r}
+# finding the quartiles using summary()
+summary(bostdat$age)
+
+# creating the age groups
+age_1 <- subset(bostdat, age < 33.00)
+age_2 <- subset(bostdat, age >= 33.00 & age < 43.00)
+age_3 <- subset(bostdat, age >= 43.00 & age < 52.00)
+age_4 <- subset(bostdat, age >= 52.00 & age <=68.00)
+
+```
+
+```{r echo=T, results='hide'}
+# pre-treatment
+mean(age_1$numberim.pre, na.rm=TRUE)
+mean(age_2$numberim.pre, na.rm=TRUE)
+mean(age_3$numberim.pre, na.rm=TRUE)
+mean(age_4$numberim.pre, na.rm=TRUE)
+
+age_pre <- c(mean(age_1$numberim.pre, na.rm=TRUE),
+mean(age_2$numberim.pre, na.rm=TRUE),
+mean(age_3$numberim.pre, na.rm=TRUE),
+mean(age_4$numberim.pre, na.rm=TRUE))
+
+# post-treatment
+mean(age_1$numberim.post, na.rm=TRUE)
+mean(age_2$numberim.post, na.rm=TRUE)
+mean(age_3$numberim.post, na.rm=TRUE)
+mean(age_4$numberim.post, na.rm=TRUE)
+
+age_post <- c(mean(age_1$numberim.post, na.rm=TRUE),
+mean(age_2$numberim.post, na.rm=TRUE),
+mean(age_3$numberim.post, na.rm=TRUE),
+mean(age_4$numberim.post, na.rm=TRUE))
+```
+
+```{r}
+# making a dataframe to display the results more clearly
+age_quartiles <- c("1st Q","2nd Q","3rd Q", "4th Q")
+data.frame(age_quartiles, age_pre, age_post)
+```
+Conservatism for those in the 1st quartile of ages (under 33 years old) decreased slightly from 3.24 to about 3.18 and for those in the 3rd quartile (between ages 43 and 52) and 4th quartile (older than age 52), decreasing from 2.93 to about 2.67 and from 2.97 to 2.88. Anti-immigration attitudes increased for those in the 2nd quartile (between ages 33 and 43) from 2.73 to 2.86.

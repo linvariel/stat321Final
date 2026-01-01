@@ -1,0 +1,212 @@
+---
+title: "W4D2 lab - Gapminder, Visualizing Distributions"
+author: "Student name"
+date: "1/24/2024"
+output:
+  pdf_document:
+    latex_engine: pdflatex
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, error = FALSE)
+
+rm(list = ls()) # clean memory
+
+```
+
+
+```{r}
+
+# Start by installing this package 
+
+# install.packages("ggthemes")
+
+# Load both tidyverse and ggthemes
+
+library(tidyverse)
+library(ggthemes)
+
+```
+
+## Introduction
+
+Let's revisit several functions or concepts we've learnt from lecture, QSS tutorials, and the first assignment 
+
+* `tapply()`
+
+* `ggplot2`
+
+* `quantile()`
+
+* `ifelse()` or `case_when`
+
+
+## Load the gapminder data again
+
+```{r}
+gapminder <- read.csv("gapminder.csv")
+
+```
+
+## quantile and ifelse
+
+Last time, we created an object that records the quartile values of `gdpPercap`
+
+```{r}
+gdp_qt <- quantile(gapminder$gdpPercap)
+```
+
+2. Now, we want to create a new variable `gdpPercap_cat` that converts `gdpPercap` into four categories: `poor`, `middle`, `wealthy`, and `very wealthy` based on quartiles in `gdp_qt`
+
+```{r}
+
+# You can stack multiple conditions in ifelse
+gapminder$gdpPercap_cat <- ifelse(gapminder$gdpPercap <= gdp_qt[2], "poor", 
+                             ifelse(gapminder$gdpPercap > gdp_qt[2] & gapminder$gdpPercap <= gdp_qt[3], "middle", 
+                                    ifelse(gapminder$gdpPercap > gdp_qt[3] & gapminder$gdpPercap <= gdp_qt[4], "wealthy",
+                                           ifelse(gapminder$gdpPercap > gdp_qt[4], "very wealthy", NA))))
+```
+
+
+```{r}
+# There is a way to do the same thing in dplyr 
+# And, there is another function to do this, called case_when
+gapminder <- gapminder %>%
+  mutate(gdpPercap_cat = case_when(gdpPercap < gdp_qt[2] ~ "poor", 
+      gdpPercap > gdp_qt[2] & gdpPercap <= gdp_qt[3] ~ "middle", 
+      gdpPercap > gdp_qt[3] & gdpPercap <= gdp_qt[4] ~ "wealthy", 
+      gdpPercap > gdp_qt[4] ~ "very wealthy"))
+
+```
+
+
+3. Use `tapply` to find the mean of `lifeExp` for each income group, based on `gdpPercap_cat`
+
+```{r}
+#       vector, index, function
+tapply(gapminder$lifeExp, gapminder$gdpPercap_cat, mean)
+```
+
+4. Do the same thing using `group_by` and `summarise` - and create a new object
+
+```{r}
+gapminder %>%
+  group_by(gdpPercap_cat) %>%
+  summarise(mean = mean(lifeExp))
+```
+
+
+
+# Visualizing Distributions
+
+We can find means, medians, and quartiles of variables - but is often
+more effective to display the distributions of variables visually. 
+
+How do create different graphs in ggplot? 
+
+Recommendation:
+
+
+https://r-graph-gallery.com/index.html
+
+
+
+Histogram
+```{r}
+
+#Histograms 
+
+ggplot(gapminder, aes(x = lifeExp)) + 
+  geom_histogram(binwidth = 10)
+
+#change the size of the bins using binwidth = 10 within the geom_histogram call
+
+
+# If we want to plot density, we can use a different geom 
+
+ggplot(gapminder, aes(x = lifeExp)) + 
+  geom_density()
+
+# You can also create a histogram based on densityh 
+
+ggplot(gapminder, aes(x = lifeExp)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white") +
+  theme_wsj()
+
+# notice the changed aesthetic call in geom_histogram -- we tell R that we do not 
+# want to plot the counts but rather the proportions 
+
+#Again, there are endless customization options 
+
+ggplot(gapminder, aes(x = lifeExp)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white") +
+  geom_density(alpha =.2, color = "red") +
+  theme_classic() +
+  geom_vline(aes(xintercept = median(lifeExp)),
+             color = "blue", linetype = "dashed", size = 0.9) +
+  labs(title="Life Expectancy Plot", x="Years", y = "Proportion")
+
+
+```
+
+# Boxplots in ggplot
+
+Let's say we are interested in how life expectancy differs by continent
+
+We could calculate grouped averages (or other grouped statisics)
+```{r}
+gapminder %>%
+  group_by(continent) %>%
+  summarise(mean = mean(lifeExp))
+
+```
+* We can do something similar visually using a boxplot
+
+```{r}
+# Basic box plot
+
+ggplot(gapminder, aes(x= continent, y= lifeExp)) + 
+  geom_boxplot()
+
+# This shows us the distribution of lifeExp by continent
+# Bar show median, box is 25th and 75th percentile - whiskers show 1.5x IQR 
+# The dots further out than the whiskers are typically considered outliers 
+
+
+# This is a substantively much more useful look at the data 
+
+
+# Again, we can customize 
+
+# install.packages(c("hrbrthemes", "viridis"))
+
+library(hrbrthemes)
+library(viridis)
+
+gapminder %>%
+  # for specific year
+  filter(year == 2007) %>%
+  ggplot(aes(x =continent, y= lifeExp, fill=continent)) +
+    geom_boxplot(size = 0.4) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.4) +
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    theme_classic() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Distrbution of Life expectancies by continent") +
+    xlab("") + ylab("")
+
+```
+
+
+
+
+
+
+
+

@@ -1,0 +1,17 @@
+---
+title: "wk2D1"
+output: html_document
+date: "2024-01-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# When the TA sends out the markdown file, make sure you copy the "cleanup" code lines and save them somewhere! It is a good habit to clear the clutter.
+
+Here we are importing the dataset from the L1 material.
+```{r}
+data <- read.csv("turnout.csv")
+head(data)
+```
+

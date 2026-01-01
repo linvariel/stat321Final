@@ -1,0 +1,72 @@
+---
+title: "W6D2 - Regression and Confounding"
+author: "student name"
+date: /today
+output:
+  pdf_document:
+    latex_engine: pdflatex
+fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Prerequisite
+```{r}
+library(tidyverse)
+
+rm(list = ls())
+
+# load data
+data(mtcars)
+```
+
+
+# Regression analysis
+
+Perform a regression of mpg ($Y$) on hp ($X$) and report the estimated coefficient using the function `lm()` and `summary()`. 
+
+```{r}
+fit <- lm(mpg ~ hp, data = mtcars)
+summary(fit)$r.squared
+```
+
+
+Now, Visualize the relationship between mpg and hp using ggplot and fit a linear regression.
+
+```{r}
+mtcars %>%
+  ggplot(aes(x=hp, y=mpg)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+
+
+# Confounding
+
+
+Create a new plot by adding a color aesthetic that maps the `cyl` variable. Ensure that `cyl` is of class factor so that ggplot automatically groups each level. 
+
+```{r}
+mtcars %>%
+  ggplot(aes(x=hp, y=mpg, group=cyl)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_classic()
+
+```
+
+
+Then, perform a regression of `mpg` on `hp` and `cyl`. Compare the results with the previous model to identify any changes.
+
+```{r}
+fit_2 <- lm(mpg ~ hp + cyl, data=mtcars)
+coef(fit_2) #we see that cyl has a huge effect on mpg.
+#What is the effect if we hold the confounding constant?
+
+```
+

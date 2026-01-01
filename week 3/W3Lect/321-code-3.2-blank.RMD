@@ -1,0 +1,114 @@
+---
+title: "CSSS 321: Code from Class 3.2"
+subtitle: "In-Class Demo with Ladd and Lenz (2009)"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading and Exploring the Data Frame
+
+Let's load the data and create a new dataframe called `dat`. 
+```{r}
+dat <- read.csv("newspapers.csv")
+
+```
+
+We can see that `dat` is a dataframe with 1593 rows and 7 variables.  The variables are described in the following table:
+
+| Name            | Description                                                                                                  |
+|-----------------|--------------------------------------------------------------------------------------------------------------|
+| `to_labour`       | Did respondent read a newspaper that switched endorsement to the Labour between 1992 and 1997 (1=Yes, 0=No)? |
+| `vote_lab_92`   | Did respondent vote for Labour in 1992 election (1=Yes, 0=No)?                                               |
+| `vote_lab_97`   | Did respondent vote for Labour in 1997 election (1=Yes, 0=No)?                                               |
+| `parent_labour` | Did the respondent's parents vote for Labour (1=Yes, 0=No)?                                                  |
+| `wkclass`       | Does the respondent identify as working class (1=Yes, 0=No)?                                                 |
+| `male`          | Does the respondent identify as Male (1=Yes, 0=No)?                                                          |
+| `age`     | Age of respondent |
+
+
+## (1) Calculate the Average Treatment Effect with a Cross-Sectional Design Using 1997 BEPS survey data.
+
+Recall that our treatment is someone reading a paper that switched their endorsement. In our dataframe, this corresponds to the variable `to_labour`.  Our outcome of interest that corresponds to the cross-sectional design is how the respondent voted in 1997, which corresponds to the variable `vote_lab_97`.
+
+When we aren't incorporating controls, we can calculate the ATE in a cross-sectional design the same way we did for randomized experiments. 
+
+```{r}
+treated <- subset(dat, subset = to_labour == 1)
+control <- subset(dat, subset = to_labour == 0)
+
+ate <- mean(treated$vote_lab_97) - mean(control$vote_lab_97) #interpretation: increased voting for labour group
+ate 
+```
+
+If you want to practice using ``tapply()``, we can calculate this same quantity with the following code:
+
+```{r}
+vote_by_treat <- tapply(dat$vote_lab_97, dat$to_labour, mean)
+vote_by_treat
+ate <- vote_by_treat[2] - vote_by_treat[1]
+ate
+```
+
+## (2)  Check for balance on (binary) pretreatment variables.
+
+There are three binary pretreatment variables in this dataframe: `parent_labour`, `wkclass`, and `male`.  First, let's check to see if the sample proportions of these variables are the same in our treatment and control groups.  Then use subclassification to statistically control for this variable and estimate the treatment effect within levels of that variable. 
+
+First, I'm going to compare the sample proportions in our treatment and control groups.  Then, I'll calculate the ATE for men only, followed by the same for women. 
+
+```{r}
+mean(treated$male)
+mean(control$male)
+```
+
+```{r}
+trt_male <- treated[treated$male==1,]
+ctr_male <- control[control$male==1,]
+mean(trt_male$vote_lab_97) - mean(ctr_male$vote_lab_97)
+```
+
+```{r}
+trt_female <- treated[treated$male == 0,]
+ctr_female <- control[control$male == 0,]
+mean(trt_female$vote_lab_97) - mean(ctr_female$vote_lab_97)
+```
+
+Let's repeat this for our pretreatment variable `parent_labour`, corresponding to whether the respondent's parents vote for Labour.  I'm going to do this here using the ``tapply()`` function, but you could use the coding above and should arrive at the same results (and vice versa). 
+
+```{r}
+plab_by_treat <- 
+plab_by_treat
+
+trt_by_plab <- 
+ctr_by_plab <- 
+
+trt_by_plab #average of the outcome for treated, for parents that did and didn't
+ctr_by_plab #average of the outcome for control, for parents that did and didn't
+```
+
+```{r}
+ate_by_plab <- 
+ate_by_plab #ate among parent not voting for labor much bigger!
+```
+
+## (3) Leverage panel structure to estimate effect with a before-and-after design that compares votes in 1992 and 1997.
+
+With the panel data, we can use our variables for whether the respondents voted for Labour in 1992 and 1997 to compare before and after the treatment.  
+
+```{r}
+treated_diff <- mean(treated$vote_lab_97) - mean(treated$vote_lab_92)
+treated_diff
+```
+
+## (4)  Estimate effect with a difference-in-differences design, comparing average changes over time in treatment and control groups.
+
+We'll use `treated_diff` from above, but need to create a similar variable that captures the average change in the control group. 
+
+```{r}
+control_diff <- mean(control$vote_lab_97) - mean(control$vote_lab_92)
+treated_diff - control_diff
+```

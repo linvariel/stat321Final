@@ -1,0 +1,251 @@
+---
+title: "CSSS 321: Code from Class 4.2"
+subtitle: "In-Class Demo with Carvalho, Meier, and Wang (2016)"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The following demo on the CMW (2016) data is based on an exercise and analysis developed by Herrissa Lamonthe.
+
+## Loading and Exploring the Data Frame
+
+Let's load the data and create a new dataframe called `dat`. 
+```{r}
+dat <- read.csv("poverty.csv")
+head(dat)
+```
+
+We can see that `dat` is a dataframe with 2670 rows and 5 variables.  The variables are described in the following table:
+
+-------------------------------------------------------------------------------
+ Name                         Description
+ ---------------------------- ---------------------------------------------------------
+  `treatment`                 Treatment conditions: `Before Payday` and `After Payday`
+  
+  `cash`                      Amount of cash respondent has on hand
+  
+  `accts_amt`                 Amount in checking and saving accounts
+  
+  `stroop_time`               Log-transformed average response time for cognitive 
+                              stroop test
+  
+  `income_less20k`            Binary variable: `1` if respondent earns less than 20k a 
+                              year and `0` otherwise
+-------------------------------------------------------------------------------
+
+
+## (1) Visualize distribution of data measuring financial resources. 
+
+Begin by examining the univariate distributions of the two financial resources measures -- `dat$cash` and `dat$accts_amt`. 
+
+```{r,out.width="75%",fig.align='center'}
+hist(dat$cash, freq = FALSE, 
+     xlab = "Cash", 
+     main = "Distribution of Cash")
+```
+
+```{r,out.width="75%",fig.align='center'}
+hist(dat$accts_amt, freq = FALSE, 
+     xlab = "Checking/Savings Balance", 
+     main = "Distribution of Checking/Savings Balance")
+```
+
+We can see from these figures that the distributions for `dat$cash` and `dat$accts_amt` are highly skewed and possess many **extreme** values (outliers). This is a cause for concern if our outliers are not evenly distributed between `BeforeTreatment` and `AfterTreatment` groups.  Why?
+
+## (2) Compare to visualizations of log transformed measures of financial resources.
+
+We can transform these variables by taking the natural logarithm with the function `log()`.  Since the natural logarithm of 0 is undefined, we will add a small value (in this case, we will use \$1 so that $\log 1 = 0$) to the 0 values for the variables being transformed.  
+
+```{r}
+dat$log_cash <- dat$cash
+dat$log_cash[dat$log_cash == 0] <- 1
+dat$log_cash <- log(dat$log_cash)
+
+dat$log_accts_amt <- dat$accts_amt
+dat$log_accts_amt[dat$log_accts_amt == 0] <- 1
+dat$log_accts_amt <- log(dat$log_accts_amt)
+```
+
+Let's visualize the distribtuions of these log-transformed variables with histograms as we did above.  We're looking to see what a log transformation does to the distribution of the two variables.
+
+```{r,out.width="75%",fig.align='center'}
+hist(dat$log_cash, freq = FALSE, 
+     xlab = "log(Cash)",
+     main = "Distribution of log(Cash) After Payday")
+```
+
+```{r,out.width="75%",fig.align='center'}
+hist(dat$log_accts_amt, freq = FALSE, 
+     xlab = "log(Checking/Savings Balance)",
+     main = "Distribution of log(Checking/Savings)\n Balance After Payday")
+```
+
+
+## (3) Calculate the treatment effect on `stroop_time` using both the mean and the median values.  
+
+Recall that `dat$stroop_time` is the log-transformed variable of the average response time for the stroop cognitive test.  Let's do a simple difference of means, followed by a difference of medians. 
+
+```{r}
+tapply(dat$stroop_time, dat$treatment, mean) - 
+  mean(dat$stroop_time[dat$treatment == "Before Payday"])
+```
+
+```{r}
+tapply(dat$stroop_time, dat$treatment, median) - 
+  median(dat$stroop_time[dat$treatment == "Before Payday"])
+```
+
+Both the average and median treatment effects are close to zero! We can still practice visualizing with scatterplots this (non)relationship between financial circumstance and cognitive performance. Below I show how you can use `par()` and the `mfrow()` option to put two plots side-by-side.  Here, I'm going to create one plot of the "before payday" group, and one plot with the "after payday" group.
+
+```{r,out.width="65%",fig.align='center'}
+par(mfrow = c(1,2))
+plot(dat$log_cash[dat$treatment == "Before Payday"], 
+     dat$stroop_time[dat$treatment == "Before Payday"],
+     ylab = "log(Average Response Time)", xlab = "log(Cash)", 
+     main = "Before Payday")
+
+plot(dat$log_cash[dat$treatment == "After Payday"], 
+     dat$stroop_time[dat$treatment == "After Payday"],
+     ylab = "log(Average Response Time)", xlab = "log(Cash)", 
+     main = "After Payday")
+```
+
+
+```{r,out.width="65%",fig.align='center'}
+par(mfrow = c(1,2))
+plot(dat$log_accts_amt[dat$treatment == "Before Payday"], 
+     dat$stroop_time[dat$treatment == "Before Payday"],
+     ylab = "log(Average Response Time)", 
+     xlab = "log(Amount in Accounts)", 
+     main ="Before Payday")
+
+plot(dat$log_accts_amt[dat$treatment == "After Payday"], 
+     dat$stroop_time[dat$treatment == "After Payday"],
+     ylab = "log(Average Response Time)", 
+     xlab = "log(Amount in Accounts)", 
+     main = "After Payday")
+```
+
+For each measure of financial circumstance, we can see an essentially flat relationship for both before and after payday groups. This suggests that changes in financial resources do *not* affect cognitive performance, a primary result presented in the paper.
+
+## (4) Investigating the treatment and its effect on financial circumstance. 
+
+The treatment (`treatment`) is presumed to affect individual's financial circumstance.  While this is a perhaps reasonable assumption that a payday occuring affects individiuals' financial circumstances, we can examine empirically whether this is the case.  
+
+Let's examine the effect of a payday (`treatment`) on participants' financial resources (`cash` and `accts_amt`).  As before, we want to compare both mean and median values. 
+
+```{r}
+cashmean.diff <- mean(dat$cash[dat$treatment == "After Payday"], na.rm = TRUE) - 
+  mean(dat$cash[dat$treatment == "Before Payday"], na.rm = TRUE)
+
+cashmed.diff <- median(dat$cash[dat$treatment == "After Payday"], na.rm = TRUE) - 
+  median(dat$cash[dat$treatment == "Before Payday"], na.rm = TRUE)
+
+cash.diff <- c(cashmean.diff, cashmed.diff)
+names(cash.diff) <- c("Mean Diff.in Cash", "Median Diff.in Cash")
+cash.diff
+```
+
+After payday, respondents report on average `r round(cashmean.diff, 2)` dollars more in cash holding (cash they had on hand) than Before payday respondents. However, the median difference in amount of cash reported is `r round(cashmed.diff, 2)` dollars. Since the mean is more sensitive to outliers, this relatively small difference between the two measures of central tendency is not surprising.
+
+```{r}
+balancemean.diff <- mean(dat$accts_amt[dat$treatment == "After Payday"], na.rm = TRUE) - 
+  mean(dat$accts_amt[dat$treatment == "Before Payday"], na.rm = TRUE)
+
+balancemed.diff <- median(dat$accts_amt[dat$treatment == "After Payday"], na.rm = TRUE) - 
+  median(dat$accts_amt[dat$treatment == "Before Payday"], na.rm = TRUE)
+
+balance.diff <- c(balancemean.diff, balancemed.diff)
+names(balance.diff) <- c("Mean Diff.in Balance", "Median Diff.in Balance")
+balance.diff
+```
+
+After payday, respondents report on average `r round(-balancemean.diff, 2)` dollars *less* in their checking and savings than before payday. The median difference, however, indicates that respondents have `r round(balancemed.diff, 2)` *more* dollars in their checking and savings account. This large difference between the two values suggests the presence of influential outliers unevenly distributed between before and after payday groups.
+
+
+## (5) Use quantile-quantile plots to assess whether CMW (2016) generated variation in financial resources before and after payday.
+
+```{r,out.width="65%",fig.align='center'}
+qqplot(dat$log_cash[dat$treatment == "Before Payday"], 
+       dat$log_cash[dat$treatment == "After Payday"],
+       xlab = "Before Payday", ylab = "After Payday",
+       main = "QQ-plot Logged Cash Variable:\n Before vs. After Payday")
+abline(0,1, col="blue")
+```
+
+We can see some outliers here, but in general the qq-plot is relatively close to a 45 degree line. This suggests that there are no major differences in the distribution of cash held by respondents `Before Payday` and `After Payday`, which could be a problem for the authors' argument.  Cash is one of the measures of financial resources the authors use, so if there is no variation in cash after payday anywhere in the distribution, the treatment effectively did not occur.
+
+```{r,out.width="65%",fig.align='center'}
+qqplot(dat$log_accts_amt[dat$treatment == "Before Payday"], 
+       dat$log_accts_amt[dat$treatment == "After Payday"],
+       xlab = "Before Payday", ylab = "After Payday",
+       main = "QQ-plot Logged Account Balance Variable:\n Before vs. After Payday")
+abline(0, 1, col = "red")
+```
+
+Payday respondents in the upper 25 - 50 quantiles of the qq-plot look relatively close to a 45 degree line, meaning there is little difference in checking and savings account balances for `Before Payday` and `After Payday` and thus the treatment did not take.
+
+On the other hand, payday respondents in the lower 50 - 75 quantiles seem to have more money in checking and savings accounts than those before payday. 
+
+## (6) Heterogeneous treatment effects
+
+If these differences from (5) are systematically associated with a pre-treatment variable, this would suggest that there is a heterogeneous effect of payday on checking and savings account balances. With heterogeneous treatment effects, the idea is that the treatment may have differential effects for different subpopulations.
+
+Given this likely heterogeneous treatment effect, we can only test the authors' hypotheses about the relationship between changes in financial resources and decision-making/cognitive performance for *some* of the respondents --- those most likely to be at the lower end of the `accts_amt` variable's distribution. If those respondents are systematically different from respondents most likely to be at the upper end of the `accts_amt` variable's distribution, this could put the study's internal validity in question.
+
+Let's calculate the treatment effect of Payday on amount in checking and savings accounts separately for respondents earning more than 20,000 dollars a year and those earning less than 20,000 dollars using the variable `dat$income_less20k`:
+
+```{r}
+table(dat$income_less20k)
+```
+
+```{r}
+great20k_diff <- mean(dat$accts_amt[dat$income_less20k == 0 & 
+                                      dat$treatment == "After Payday"], na.rm = TRUE) -
+                 mean(dat$accts_amt[dat$income_less20k == 0 & 
+                                      dat$treatment == "Before Payday"], na.rm = TRUE)
+
+less20k_diff <- mean(dat$accts_amt[dat$income_less20k == 1 & 
+                                      dat$treatment == "After Payday"], na.rm = TRUE) -
+                mean(dat$accts_amt[dat$income_less20k == 1 & 
+                                      dat$treatment == "Before Payday"], na.rm = TRUE)
+
+income_diffs <- c(great20k_diff, less20k_diff)
+names(income_diffs) <- c("income > 20,000", "income < 20,000")
+income_diffs
+```
+
+The effect of treatment on the amount in people's accounts is quite different for the lower income group compared to the higher income group. For the lower income group, we see that the effect of treatment is positive-- people in the `After Payday` group have a higher balance in their accounts than people in the `Before Payday` group (the difference is `r round(less20k_diff, 2)`. But for the higher income group, the effect of treatment appears to be negative - those in the After Payday group have `r round(abs(great20k_diff), 2)` less than those in the Before Payday group.  
+
+This brings into question the idea that the study successfully manipulated economic resources through their design, especially for higher income individuals. 
+
+The difference-in-differences design (Week 3) can also be used to compare average treatment effects across different ranges of a *pre-treatment variable* - a variable that asks about people's circumstances before the treatment and thus could not be affected by the treatment. Again, let's use `income_less20k` as our pre-treatment variable. 
+
+```{r}
+diff_diff <- great20k_diff - less20k_diff
+diff_diff
+```
+
+```{r}
+great20k_diff2 <- median(dat$accts_amt[dat$income_less20k == 0 &
+                          dat$treatment == "After Payday"], na.rm = TRUE) -
+                  median(dat$accts_amt[dat$income_less20k == 0 &
+                          dat$treatment == "Before Payday"], na.rm = TRUE)
+great20k_diff2
+
+less20k_diff2 <- median(dat$accts_amt[dat$income_less20k == 1 &
+                          dat$treatment == "After Payday"], na.rm = TRUE) -
+                 median(dat$accts_amt[dat$income_less20k == 1 &
+                          dat$treatment == "Before Payday"], na.rm = TRUE)
+less20k_diff2
+
+diff_diff2 <- great20k_diff2 - less20k_diff2
+diff_diff2
+```
+
+Estimates based on the median do not show as significant differential effects of payday on amount in checking and saving accounts for groups earning more vs. less than 20,000 dollars a year. In order for the authors to convince us that they have successfully manipulated financial resources, and that their main finding -- that poverty does not affect financial decision-making -- has support, they would have to conduct all their analyses based on the median and deal with the outliers in their data.

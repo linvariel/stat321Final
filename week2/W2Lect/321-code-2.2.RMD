@@ -1,0 +1,165 @@
+---
+title: "CSSS 321: Code from Class 2.2"
+subtitle: "In-Class Demo with Broockman and Kalla (2016)"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading and Exploring the Data Frame
+
+Let's load the data and create a new dataframe called `dat`. 
+```{r}
+# setwd('/Users/Harry/Documents/Ariel/~College/~first year/WIN 24/STAT 321/W2Lect')
+dat <- read.csv("transphobia.csv")
+head(dat) #first 6 rows
+dim(dat)
+summary(dat)
+```
+
+We can see that `dat` is a dataframe with 542 rows and 10 variables.  The variables are described in the following table:
+
+| Variable Name    | Description                                                                |
+|------------------|----------------------------------------------------------------------------|
+| `age`            | Age of the respondent in years                                             |
+| `female`         | 1=respondent marked "Female" on voter registration, 0 otherwise            |
+| `voted_gen_14`   | 1 if  respondent voted in the 2014 general election                        |
+| `vote_gen_12`    | 1 if respondent voted in the 2012 general election                         |
+| `treat_ind`      | 1 if respondent was assigned to treatment, 0 for control                   |
+| `racename`       | character name of racial identity indicated on voter file                  |
+| `democrat`       | 1 if respondent is a registered Democrat                                   |
+| `therm_trans_t0` | 0-100 feeling thermometer about transgender people at baseline             |
+| `therm_trans_t1` | 0-100 feeling thermometer about transgender people 3 days after treatment  |
+| `therm_trans_t2` | 0-100 feeling thermometer about transgender people 3 weeks after treatment |
+
+
+### Creating Tables for Treatment and Control Groups
+
+In the above table we can see that our treatment variable is called `treat_ind`, where `treat_ind`=1 if the respondent was assigned the treatment, and `treat_ind`=0 if the respondent was assigned to the control group. 
+
+How many units are in the treatment and control groups?  And what is the proportion of all respondents in each group?  Let's use `table()` and `prop.table()` to answer these questions.  
+
+First, we can look at the raw number of units in the treatment and control group using `table()`:
+
+```{r}
+table(dat$treat_ind)
+```
+
+This tells us of our total 542 observations, we have 273 in the control group and 269 in the treated group.  If we want to know what proportion of sample are in each group, we can wrap that `table(dat$treat_ind)` with `prop.table()`:
+
+```{r}
+prop.table(table(dat$treat_ind))
+```
+
+And let's use `round()` and some basic arithmetic to make those easier to interpret:  
+
+```{r}
+round(100 * prop.table(table(dat$treat_ind)), digits=1)
+```
+
+Taken together, we know that 273 units (50.4% of our sample) were assigned the control, while 269 (49.6% of our sample) received the treatment. 
+
+Also, you can play with `round()` and see what happens if you round *too much*:
+
+```{r}
+round(100 * prop.table(table(dat$treat_ind)), digits=0)
+```
+
+### Checking the Balance between Treatment and Control Groups
+
+Check the balance in our treatment and control groups by calculating the average age in each group.  There are three(+) ways we can do this to arrive at the same answer.  
+
+First, let's do this and practice subsetting using `[]`.  To get the mean age in our treatment and control groups, we can subset the data according to whether units are in the treatment or control groups and then use `mean()`:
+
+```{r}
+# was the randomization (of age) successful?
+mean(dat$age[dat$treat_ind == 1]) # of dat$age, grab the ones with treatment and w/o treatment
+mean(dat$age[dat$treat_ind == 0])
+```
+
+Alternatively, we can subset our data with `subset()` that creates new dataframes for our treatment (`treated`) and control (`control`) groups, and then calculates the mean age in each dataframe with `mean()`:  
+
+```{r}
+treated <- subset(dat, treat_ind == 1)
+control <- subset(dat, treat_ind == 0)
+mean(treated$age)
+mean(control$age)
+```
+
+Lastly, let's try using `tapply()` to get these same quantities of interest with a single line of code.  `tapply()` is used to apply a function over subsets of a vector.  It is useful in precisely the scenario we have here where we want to break out dataset into groups and then apply a function (`mean()`) within each group.  
+
+```{r}
+tapply(dat$age, dat$treat_ind, mean) # we want the mean of Age, the vector we want to subset treatment groups.
+```
+
+What if we also want to check the balance in our treatment and control groups with respect to race?  
+
+```{r race_treatment}
+tapply(dat$treat_ind, dat$racename, mean) # mean will tell us the proportion of observations in each group
+table(dat$racename) # we notice that proportion of treated for Native American is 1.00, so we want to check how many people identified as Native American. 
+dat[dat$racename=="Native American",]
+#We see there is only 1. 
+```
+
+### Calculating Treatment Effects
+
+Calculate the Average Treatment Effect (ATE) on `therm_trans_t1` (0-100 feeling thermometer about transgender people 3 days after treatment) and `therm_trans_t2` (0-100 feeling thermometer about transgender people 3 weeks after treatment).  Prior expectations before we look at the data?  
+
+Remember that we created from `dat` using `subset()` two new data frames `treated` and `control` -- let's use those to calculate our ATE.  Beginning with `therm_trans_t1`:  
+
+```{r}
+mean(control$therm_trans_t1)
+mean(treated$therm_trans_t1)
+tapply(dat$therm_trans_t1,dat$treat_ind,mean)
+
+mean(treated$therm_trans_t1) - mean(control$therm_trans_t1)
+```
+
+And again with `therm_trans_t2`:  
+
+```{r}
+mean(control$therm_trans_t2)
+mean(treated$therm_trans_t2)
+tapply(dat$therm_trans_t2,dat$treat_ind,mean)
+
+mean(treated$therm_trans_t2) - mean(control$therm_trans_t2) # by 3 weeks, the effect of the conversations seems to be waning. 
+```
+
+
+### Checking Balance on Baseline Estimates 
+
+Could it be the case that maybe the treated group just had warmer feelings toward transgender people? We can use the baseline survey to find out. The authors measured that as `therm_trans_t0`. 
+
+```{r}
+tapply(dat$therm_trans_t0, dat$treat_ind, mean) # did we already have an existing difference? 
+# They were about the same. 
+```
+
+### Investigate Possibility of Differences Across Gender
+
+Calculate the effect of the treatment the first follow-up survey thermometer scores (`therm_trans_t1`) toward transgender people separately for men and women. For which group is the effect larger? 
+
+First, let's use subset to create four dataframes: (1) women receiving treatment `fem_trt`, (2) women receiving control `fem_crt`, (3) men receiving treatment `male_trt`, and (4) men receiving control `male_crt`. 
+```{r}
+# Using subset() to create dataframes fem_trt and fem_crt described above:
+fem_trt <- subset(dat, female == 1 & treat_ind == 1)
+fem_crt <- subset(dat, female == 1 & treat_ind == 0)
+
+# Using subset() to create dataframes male_trt and male_crt described above:
+male_trt <- subset(dat, female == 0 & treat_ind == 1)
+male_crt <- subset(dat, female == 0 & treat_ind == 0)
+```
+
+Next, we can calculate the ATE for females and the ATE for males separately.  First, comparing the mean value of `therm_trans_t1` for females in the treatment group to `therm_trans_t1` for females in the control group:
+```{r}
+mean(fem_trt$therm_trans_t1) - mean(fem_crt$therm_trans_t1)
+```
+
+And, we can do the same to calculate the ATE for males.  Again, we're comparing the mean value of `therm_trans_t1` for males in the treatment group to `therm_trans_t1` for males in the control group:
+```{r}
+mean(male_trt$therm_trans_t1) - mean(male_crt$therm_trans_t1)
+```

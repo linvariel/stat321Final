@@ -1,0 +1,67 @@
+---
+title: "W2qss1"
+output: pdf_document
+date: "2024-01-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+install.packages("tinytex")
+tinytex::install_tinytex()
+```
+
+```{r}
+install.packages('remotes')
+install.packages('gradethis')
+library(learnr)
+remotes::install_github("kosukeimai/qss-package", build_vignettes = TRUE)
+remotes::install_github("rstudio/learnr")
+remotes::install_github("rstudio-education/gradethis")
+remotes::install_github("mattblackwell/qsslearnr")
+```
+```{r}
+install.packages("devtools") 
+library("devtools")
+install_github("kosukeimai/qss-package", build_vignettes = TRUE)
+```
+```{r}
+remotes::install_github("rstudio/gradethis")
+```
+```{r}
+remotes::install_github("kosukeimai/qss-package", build_vignettes = TRUE)
+remotes::install_github("rstudio/learnr")
+remotes::install_github("rstudio-education/gradethis")
+remotes::install_github("mattblackwell/qsslearnr")
+
+```
+To see all tutorials, run this line of code
+```{r}
+library("tinytex")
+library("devtools")
+library(learnr)
+learnr::run_tutorial(package = "qsslearnr")
+```
+```{r}
+learnr::run_tutorial("00-intro", package = "qsslearnr")
+```
+```{r}
+getwd()
+setwd("/Users/Harry/Documents/Ariel/~College/~first year/WIN 24/STAT 321/W2QSS1")
+```
+```{r}
+library(tinytex)
+learnr::run_tutorial("01-causality1", package = "qsslearnr")
+learnr::run_tutorial("02-causality2", package = "qsslearnr")
+
+sessionInfo()
+```
+```{r}
+learnr::run_tutorial("04-measurement2",package = "qsslearnr") 
+```
+```{r}
+library(tidyverse)
+library(tinytex)
+learnr::run_tutorial("10-uncertainty2",package = "qsslearnr") 
+```
+
