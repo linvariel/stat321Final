@@ -1,7 +1,9 @@
 # Americans' Perceptions of Social Media's Impact on Democracy Correlate with Their Satisfaction with Democracy
 ## STAT 321: Data Science and Statistics for Social Sciences, University of Washington
 Naomi Le Mouel and Ariel Lin
-
+- [Full Report](https://github.com/linvariel/stat321Final/blob/main/final_report_321.pdf)
+- [R Markdown File](https://github.com/linvariel/stat321Final/blob/main/Final%20Project%20Files/final321.Rmd)
+- [Cleaned Dataset](https://github.com/linvariel/stat321Final/blob/main/Final%20Project%20Files/socialDemo.csv)
 ## Research Summary
 In this report, we examine the relationship between Americans’ satisfaction with U.S. democracy and their opinions on social media’s impact on democracy. The data used in this report are from the Pew Research Center’s American Trends Panel (ATP) Wave 105, which surveyed 3,581 U.S. adults from March 21 to 27, 2022, through random sampling of residential addresses and weighted to represent the U.S. population by gender, race, and other demographics. 
 
