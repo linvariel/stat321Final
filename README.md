@@ -1,4 +1,4 @@
-The submitted final project pdf is in the "final project maybe" folder, not the 'final project' folder.
+
 Naomi Le Mouel and Ariel Lin
 
 Research Proposal
